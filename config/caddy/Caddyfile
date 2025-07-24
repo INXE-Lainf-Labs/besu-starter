@@ -8,9 +8,7 @@
         uri strip_prefix /jwtserver
         reverse_proxy node:3000
     }
-
- 
-
+    
     handle_path /testeu/* {
         uri strip_prefix /testeu
         reverse_proxy rpcnode-user:8545
