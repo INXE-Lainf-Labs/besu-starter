@@ -20,6 +20,12 @@ app.post('/receive', (req, res) => {
     res.send('Solicitação POST recebida com sucesso!');
 });
 
+app.post('/vehicledata', (req, res) => {
+    console.log(req.body);
+    res.send('Solicitação POST recebida com sucesso!');
+});
+
+
 
 app.get('/login', (req, res) => {
     const a = {
@@ -62,3 +68,20 @@ app.get('/', (req, res) => {
 app.listen(3000, () => {
     console.log('JWT Server listening on port 3000');
 });
+
+
+/*
+   struct Tupla {
+        string t; // timestamp
+        string pos; // posição
+        string comb; // combustível
+    }
+
+    struct Trajeto {
+        Tupla[] tuplas; // sequência de tuplas
+        uint completudel;
+        uint frequencial;
+
+    }
+
+*/
