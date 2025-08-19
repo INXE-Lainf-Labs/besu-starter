@@ -4,13 +4,29 @@
   "description": "Teste",
   "main": "JWT.js",
   "scripts": {
-    "test": "run"
+    "test": "run",
+    "compile": "node scripts/compile.js",
+    "deploy": "node scripts/deploy.js",
+    "public-transaction": "node scripts/public_tx.js",
+    "private-transaction": "node scripts/private_tx.js"
   },
-  "author": "",
   "license": "ISC",
   "dependencies": {
+    "@ethereumjs/common": "^10.0.0",
+    "@ethereumjs/tx": "^10.0.0",
+    "@nomicfoundation/hardhat-ethers": "^4.0.0",
+    "@nomicfoundation/hardhat-network-helpers": "^3.0.0",
+    "async-promise-pool": "^1.0.6",
     "cors": "^2.8.5",
+    "ethers": "^6.15.0",
     "express": "^5.1.0",
-    "jsonwebtoken": "^9.0.2"
+    "fs-extra": "^11.3.1",
+    "i": "^0.3.7",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.17.0",
+    "npm": "^11.5.2",
+    "solc": "^0.8.30",
+    "web3": "^4.16.0",
+    "web3js-quorum": "^22.4.0"
   }
 }
