@@ -2,8 +2,13 @@ const path = require('path');
 const fs = require('fs-extra');
 var ethers = require('ethers');
 
+const haversine = require('haversine-distance')
+const rl = require('ml-regression-simple-linear');
+
+
 // RPCNODE details
 const { tessera, besu } = require("../keys.js");
+const { join } = require('path');
 const host = besu.rpcnode.url;
 const accountPrivateKey = besu.rpcnode.accountPrivateKey;
 
@@ -14,167 +19,584 @@ const contractJson = JSON.parse(fs.readFileSync(contractJsonPath));
 const contractAbi = contractJson.abi;
 const contractBytecode = contractJson.evm.bytecode.object
 
-
-
-
- async function deployMonetizaFactory() {
-  const factory = new ethers.ContractFactory(
-    MonetizaFactoryArtifact.abi,
-    MonetizaFactoryArtifact.bytecode,
-    signer
-  );
-
-  const contract = await factory.deploy(await signer.getAddress());
-  await contract.deployed();
-  console.log("MonetizaFactory deployed at:", contract.address);
-
-  factoryContract = contract;
-  return contract.address;
-}
-
- async function loadMonetizaFactory(address) {
-  factoryContract = new ethers.Contract(address, MonetizaFactoryArtifact.abi, signer);
-  return factoryContract;
-}
-
- async function getContractCreatedEventByWalletAndAddress(factoryContract, walletAddress, deployedAddress, fromBlock = 0, toBlock = "latest") {
-  const filter = factoryContract.filters.ContractCreated(null, deployedAddress, walletAddress);
-
-  const events = await factoryContract.queryFilter(filter, fromBlock, toBlock);
-
-  return events.map(event => ({
-    id: event.args.id.toNumber(),
-    contractAddress: event.args.contractAddress,
-    owner: event.args.owner,
-    blockNumber: event.blockNumber,
-    txHash: event.transactionHash
-  }));
-}
-
- async function setK(value) {
-  const tx = await factoryContract.setK(value);
-  await tx.wait();
-  console.log("K set to:", value);
-}
-
- async function createNewMonetiza(wallet) {
-  const tx = await factoryContract.createNewContract(wallet);
-  const receipt = await tx.wait();
-  const event = receipt.events.find(e => e.event === 'ContractCreated');
-  const contractAddr = event.args.contractAddress;
-  console.log("New Monetiza contract created:", contractAddr);
-  return contractAddr;
-}
-
- async function createEventOn(index, vin, timestamp, fuel_b, abastecimento, usertank) {
-  const tx = await factoryContract.createevent(index, vin, timestamp, fuel_b, abastecimento, usertank);
-  await tx.wait();
-  console.log("Event created");
-}
-
- async function closeEvent(index) {
-  const tx = await factoryContract.closeevent(index);
-  await tx.wait();
-  console.log("Event closed");
-}
-
- async function addTrajeto(index, hash, dist, fuel, time, timeless) {
-  const tx = await factoryContract.createTrajeto(index, hash, dist, fuel, time, timeless);
-  await tx.wait();
-  console.log("Trajeto added");
-}
-
- async function getNEvent(index) {
-  const result = await factoryContract.getNEvent(index);
-  console.log("NEvent:", result.toString());
-  return result.toNumber();
-}
-
- function linearRegression(y,x){
-        var lr = {};
-        var n = y.length;
-        var sum_x = 0;
-        var sum_y = 0;
-        var sum_xy = 0;
-        var sum_xx = 0;
-        var sum_yy = 0;
-
-        for (var i = 0; i < y.length; i++) {
-
-            sum_x += x[i];
-            sum_y += y[i];
-            sum_xy += (x[i]*y[i]);
-            sum_xx += (x[i]*x[i]);
-            sum_yy += (y[i]*y[i]);
-        } 
-
-        lr['slope'] = (n * sum_xy - sum_x * sum_y) / (n*sum_xx - sum_x * sum_x);
-        lr['intercept'] = (sum_y - lr.slope * sum_x)/n;
-        lr['r2'] = Math.pow((n*sum_xy - sum_x*sum_y)/Math.sqrt((n*sum_xx-sum_x*sum_x)*(n*sum_yy-sum_y*sum_y)),2);
-
-        return lr;
-}
-
-async function main(wallet_user) {
+//função utilizada pelo servidor para fazer o deploy do contrato inteligente
+async function createMasterContract() {
+  //console.log("Contract bytecode size:", contractBytecode.length / 2, "bytes");
   const provider = new ethers.JsonRpcProvider(host);
   const wallet = new ethers.Wallet(accountPrivateKey, provider);
-// var contract = createContract(provider, wallet, contractAbi, contractBytecode, 47);
-//  contractAddress = await contract.getAddress();
-
-  console.log("Deploying contract...");
-  console.log(wallet.address);
 
   // Deploy MonetizaFactory
   const factory = new ethers.ContractFactory(contractAbi, contractBytecode, wallet);
-  const monetizaFactory = await factory.deploy(wallet.address);
-  const deployed = await monetizaFactory.waitForDeployment();
+  //console.log(wallet.address);
+  const feeData = await provider.getFeeData();
+  const contract = await factory.deploy(wallet.address);
+  // The c
 
-  console.log("MonetizaFactory deployed at:", monetizaFactory.target);
+  const deployed = await contract.waitForDeployment();
+  console.log("MonetizaFactory deployed at:", deployed.target);
+  return deployed.target;
+}
 
-
-  
-  // Call setK
-  const txSetK = await monetizaFactory.setK(3);
+async function set_k(deployedContractAddress, value) {
+  const provider = new ethers.JsonRpcProvider(host);
+  const wallet = new ethers.Wallet(accountPrivateKey, provider);
+  console.log(deployedContractAddress, value);
+  const readOnlyContract = new ethers.Contract(deployedContractAddress, contractAbi, provider);
+  const writableContract = readOnlyContract.connect(wallet);
+  const txSetK = await writableContract.setK(value);
   await txSetK.wait();
-  console.log("K set to 42");
-  
-  
+  console.log("K set to 3");
+}
 
+async function getOpenEvent(mastercontract, id) {
+  const provider = new ethers.JsonRpcProvider(host);
+  const wallet = new ethers.Wallet(accountPrivateKey, provider);
+  const readOnlyContract = new ethers.Contract(mastercontract, contractAbi, provider);
+  const writableContract = readOnlyContract.connect(wallet);
+  return (await writableContract.checkStatus(id));
+}
+
+
+async function existContract(mastercontract, wallet_user) {
+  const provider = new ethers.JsonRpcProvider(host);
+  const wallet = new ethers.Wallet(accountPrivateKey, provider);
+
+
+  const readOnlyContract = new ethers.Contract(mastercontract, contractAbi, provider);
+  const writableContract = readOnlyContract.connect(wallet);
+  // Get events from block 0 to latest
+  const contracts = await writableContract.queryFilter("ContractCreated", 0, "latest");
+
+  a = false
+
+  for (const contract of contracts) {
+    if (contract.args.owner == wallet_user) {
+      a = true;
+    }
+  }
+
+  return a;
+
+}
+
+
+
+async function getUserContract(mastercontract, wallet_user) {
+  const provider = new ethers.JsonRpcProvider(host);
+  const wallet = new ethers.Wallet(accountPrivateKey, provider);
+
+
+  const readOnlyContract = new ethers.Contract(mastercontract, contractAbi, provider);
+  const writableContract = readOnlyContract.connect(wallet);
+  // Get events from block 0 to latest
+  const contracts = await writableContract.queryFilter("ContractCreated", 0, "latest");
+
+
+
+  for (const contract of contracts) {
+    if (contract.args.owner == wallet_user) {
+      return contract;
+    }
+  }
+
+
+}
+
+
+
+//recupera trajetos em eventos fechados
+async function getEventOpen(mastercontract, wallet_user) {
+  const provider = new ethers.JsonRpcProvider(host);
+
+  const wallet = new ethers.Wallet(accountPrivateKey, provider);
+
+  exist = await existContract(mastercontract, wallet_user);
+
+  if (exist) {
+    help = await getUserContract(mastercontract, wallet_user);
+
+    if (await getOpenEvent(mastercontract, help.args.id) == true) { return await getOpenEvent(mastercontract, help.args.id) } else {
+      console.log("Não existe evento aberto");
+      return false
+    }
+
+
+  } else {
+    console.log("contrato não existente");
+    return false
+  }
+}
+
+
+//recupera trajetos em eventos fechados
+async function getEventClose(mastercontract, wallet_user) {
+
+  const provider = new ethers.JsonRpcProvider(host);
+
+  const wallet = new ethers.Wallet(accountPrivateKey, provider);
+
+  helpadd = await getUserContract(mastercontract, wallet_user)
+
+  const contractJsonPath2 = path.resolve(__dirname, '../', 'contracts', 'Monetiza.json');
+  const contractJson2 = JSON.parse(fs.readFileSync(contractJsonPath2));
+  const contractAbi2 = contractJson2.abi;
+  const contractBytecode2 = contractJson2.evm.bytecode.object
+
+  const monetizaContract = new ethers.Contract(helpadd.args[1], contractAbi2, provider);
+
+  const logs = await monetizaContract.queryFilter("EventRegistered", 0, "latest");
+
+
+  aux = [];
+  for (const log of logs) {
+
+    if (log.args.wallet == wallet_user) {
+      aux.push(contract)
+
+    }
+  }
+
+  return aux;
+
+}
+
+//recupera trajetos em eventos abertos
+async function getPathEventOpen(mastercontract, wallet_user) {
+  const provider = new ethers.JsonRpcProvider(host);
+
+  const wallet = new ethers.Wallet(accountPrivateKey, provider);
+
+  exist = await existContract(mastercontract, wallet_user);
+
+
+  if (exist) {
+    help = await getUserContract(mastercontract, wallet_user);
+
+
+    if (await getOpenEvent(mastercontract, help.args.id) == true) {
+
+
+      return await writableContract.getpath(help.args.id);
+    } else {
+      return "Não existe evento aberto";
+    }
+
+  } else {
+    console.log("contrato não existente");
+  }
+
+}
+
+//recupera trajetos em eventos fechados
+async function getPathEventClose(mastercontract, wallet_user) {
+
+  const provider = new ethers.JsonRpcProvider(host);
+
+  const wallet = new ethers.Wallet(accountPrivateKey, provider);
+
+  helpadd = await getUserContract(mastercontract, wallet_user)
+
+  const contractJsonPath2 = path.resolve(__dirname, '../', 'contracts', 'Monetiza.json');
+  const contractJson2 = JSON.parse(fs.readFileSync(contractJsonPath2));
+  const contractAbi2 = contractJson2.abi;
+  const contractBytecode2 = contractJson2.evm.bytecode.object
+
+  const monetizaContract = new ethers.Contract(helpadd.args[1], contractAbi2, provider);
+
+  const logs = await monetizaContract.queryFilter("TrajetosRegistered", 0, "latest");
+
+  aux = [];
+  for (const log of logs) {
+
+    if (log.args.wallet == wallet_user) {
+      aux.push(log)
+
+    }
+  }
+
+  return aux;
+}
+
+async function createUserContract(mastercontract, wallet_user) {
+  const provider = new ethers.JsonRpcProvider(host);
+  const wallet = new ethers.Wallet(accountPrivateKey, provider);
   // Create a new Monetiza contract
-  const txNew = await monetizaFactory.createNewContract(wallet_user);
-  const receipt = await txNew.wait();
-  const event = receipt.events.find(e => e.event === "ContractCreated");
-  const monetizaAddress = event.args.contractAddress;
-  console.log("Monetiza deployed at:", monetizaAddress);
+  const readOnlyContract = new ethers.Contract(mastercontract, contractAbi, provider);
+  const writableContract = readOnlyContract.connect(wallet);
+  exist = await existContract(mastercontract, wallet_user);
 
-  // Call createevent
-  await monetizaFactory.createevent(
-    0,
-    "VIN123",
-    "2025-08-06T20:00:00Z",
-    100,
-    10,
-    50
-  );
-  console.log("Event created");
-  /*
-  // Add a trajeto
-  const hash = ethers.utils.formatBytes32String("trajeto1");
-  await monetizaFactory.createTrajeto(0, hash, 1200, 5, 300, 30);
-  console.log("Trajeto created");
+  if (a == false) {
+    const txNew = await writableContract.createNewContract(wallet_user);
+    const receipt = await txNew.wait();
+    console.log(receipt);
 
-  // Close the event
-  await monetizaFactory.closeevent(0);
-  console.log("Event closed");
+  } else {
+    console.log("contrato existente");
+  }
 
-  // Get number of events
-  const nevent = await monetizaFactory.getNEvent(0);
-  console.log("Number of events:", nevent.toString());
-  */
+}
+
+
+async function CreateUserEvent(data, mastercontract, wallet_user) {
+
+  const provider = new ethers.JsonRpcProvider(host);
+  const wallet = new ethers.Wallet(accountPrivateKey, provider);
+  const readOnlyContract = new ethers.Contract(mastercontract, contractAbi, provider);
+  const writableContract = readOnlyContract.connect(wallet);
+
+  exist = await existContract(mastercontract, wallet_user);
+
+  if (exist) {
+    help = await getUserContract(mastercontract, wallet_user);
+    const decimals = 18; // depende do token
+    const df = ethers.parseUnits(data.fuel_b.toString(), decimals);
+    const da = ethers.parseUnits(data.abastecimento.toString(), decimals);
+    const du = ethers.parseUnits(data.usertank.toString(), decimals);
+
+    console.log(df, da, du)
+
+    const txNew = await writableContract.createEvent(help.args.id, wallet_user, help.args.contractAddress, data.vin, data.t, df, da, du);
+    const receipt = await txNew.wait();
+    return true;
+
+  } else {
+    console.log("contrato não existente");
+    return false;
+  }
+}
+
+async function getuserscore(mastercontract, wallet_user) {
+
+  const provider = new ethers.JsonRpcProvider(host);
+  const wallet = new ethers.Wallet(accountPrivateKey, provider);
+  // Create a new Monetiza contract
+  const readOnlyContract = new ethers.Contract(mastercontract, contractAbi, provider);
+  const writableContract = readOnlyContract.connect(wallet);
+
+
+  exist = await existContract(mastercontract, wallet_user);
+
+  if (exist) {
+    help = await getUserContract(mastercontract, wallet_user);
+    return await writableContract.getscore(help.args.id);
+  } else {
+    console.log("contrato não existente");
+    return false;
+  }
+
+
+}
+
+
+async function getcoin(mastercontract, wallet_user) {
+
+  const provider = new ethers.JsonRpcProvider(host);
+  const wallet = new ethers.Wallet(accountPrivateKey, provider);
+  // Create a new Monetiza contract
+  const readOnlyContract = new ethers.Contract(mastercontract, contractAbi, provider);
+  const writableContract = readOnlyContract.connect(wallet);
+
+
+  exist = await existContract(mastercontract, wallet_user);
+
+  if (exist) {
+    help = await getUserContract(mastercontract, wallet_user);
+
+    return await writableContract.getcoin(help.args.id);
+
+  } else {
+    console.log("contrato não existente");
+    return false;
+  }
+
+
+}
+
+async function closeUserEvent(mastercontract, wallet_user) {
+
+  const provider = new ethers.JsonRpcProvider(host);
+  const wallet = new ethers.Wallet(accountPrivateKey, provider);
+  // Create a new Monetiza contract
+  const readOnlyContract = new ethers.Contract(mastercontract, contractAbi, provider);
+  const writableContract = readOnlyContract.connect(wallet);
+
+
+  exist = await existContract(mastercontract, wallet_user);
+
+  if (exist) {
+    help = await getUserContract(mastercontract, wallet_user);
+
+
+    console.log(await getOpenEvent(mastercontract, help.args.id));
+
+    if (await getOpenEvent(mastercontract, help.args.id) == true) {
+
+      const txNew = await writableContract.closeevent(help.args.id, wallet_user, help.args.contractAddress);
+      const receipt = await txNew.wait();
+      console.log(receipt);
+    } else {
+      console.log("Não há eventos em aberto");
+    }
+
+
+  } else {
+    console.log("contrato não existente");
+  }
+
+
+}
+
+async function mediavector(a) {
+  media = 0.0
+  for (i = 0; i < a.length; i++) {
+    media = media + a[i]
+  }
+
+  media = media / ((a.length) - 1);
+  return media
+
+}
+
+async function Timeliness(values, k) {
+
+
+  k_aux = 1 / k
+
+
+
+  f = await mediavector(values)
+
+
+  f_aux = 1 / f
+
+
+
+  if (f_aux >= k_aux) {
+    return 1.0
+  }
+
+  f_k = (f_aux / k_aux) / Math.log(f_aux / k_aux)
+
+  res_2 = Math.exp(1)
+
+  timeless = -Math.pow(res_2, f_k) + 1
+
+  if (timeless == NaN) {
+    return 0.0;
+  }
+
+  return timeless
+
+
+
+
+
+}
+
+async function insert_path(hash, tuple, mastercontract, wallet_user) {
+
+  exist = await existContract(mastercontract, wallet_user);
+
+  if (exist) {
+    help = await getUserContract(mastercontract, wallet_user);
+
+    a = console.log(await getOpenEvent(mastercontract, help.args.id));
+
+    if (await getOpenEvent(mastercontract, help.args.id) == true) {
+
+      listPoints = []
+      listFuel = []
+      listTime = []
+
+      a = tuple.data;
+
+
+      for (i = 0; i < a.length; i++) {
+
+
+
+        if (parseFloat(tuple.data[i].userdata.pos.lat) != 0.0 && parseFloat(tuple.data[i].userdata.pos.long) != 0.0) {
+          point = {
+            lat: tuple.data[i].userdata.pos.lat,
+            lng: tuple.data[i].userdata.pos.long
+          }
+
+          listPoints.push(point)
+        }
+
+
+
+        listTime.push(tuple.data[i].userdata.time)
+
+        for (j = 0; j < tuple.data[i].userdata.userdata.length; j++) {
+
+          if (tuple.data[i].userdata.userdata[j].pid = "01 2F") {
+
+            listFuel.push(parseFloat(tuple.data[i].userdata.userdata[j].obddata.response))
+
+          }
+
+
+        }
+
+      }
+
+
+      listtModify = [0]
+
+      helpsum = 0
+
+      for (i = 0; i < listTime.length; i++) {
+
+        if (i + 1 < listTime.length) {
+
+          //TIME INIT  
+          const date1 = new Date(listTime[i]); // First date and time
+          const date2 = new Date(listTime[i + 1]); // Second date and time
+
+          // Calculate the difference in milliseconds
+          const diffMilliseconds = date2.getTime() - date1.getTime();
+
+          // Convert milliseconds to hours
+          const diffHours = diffMilliseconds / (1000);
+
+          helpsum = helpsum + diffHours
+
+          listtModify.push(helpsum)
+          //TIME CLOSE  
+
+
+        }
+
+      }
+
+      timeli = await Timeliness(listtModify, 3);
+
+
+      //fingindo que adicionei o ruido
+      newlistFuel = []
+
+      const regression = new rl.SimpleLinearRegression(listtModify, listFuel);
+
+
+      const json = regression.toJSON();
+      const loaded = rl.SimpleLinearRegression.load(json);
+      for (i = 0; i < listFuel.length; i++) {
+
+        newlistFuel.push(loaded.predict(listtModify[i]));
+      }
+      //console.log(newlistFuel)
+
+
+
+      fuel = newlistFuel[0] - newlistFuel[newlistFuel.length - 1]
+
+
+
+      timef = listtModify[listtModify.length - 1];
+
+      //console.log(timef);
+
+
+      hashgenerate = ethers.encodeBytes32String(hash._id.toString());
+
+
+      distmeters = 0;
+
+      for (i = 0; i < listPoints.length; i++) {
+
+
+        if (i < listPoints.length - 1) {
+
+
+          distmeters = haversine(listPoints[i], listPoints[i + 1]);
+
+        }
+
+      }
+
+
+      const provider = new ethers.JsonRpcProvider(host);
+      const wallet = new ethers.Wallet(accountPrivateKey, provider);
+      // Create a new Monetiza contract
+      const readOnlyContract = new ethers.Contract(mastercontract, contractAbi, provider);
+      const writableContract = readOnlyContract.connect(wallet);
+
+      fuel = (fuel / 100) * 40;
+
+
+      fuel = 1;
+
+      const decimals = 18; // depende do token
+      const dm = ethers.parseUnits(distmeters.toString(), decimals);
+      const f = ethers.parseUnits(fuel.toString(), decimals);
+      const ts = ethers.parseUnits(timef.toString(), decimals);
+      const tl = ethers.parseUnits(timeli.toString(), decimals);
+
+      const txNew = await writableContract.createTrajeto(help.args.id, wallet_user, help.args.contractAddress, hashgenerate, dm, f, ts, tl);
+
+      const receipt = await txNew.wait();
+      console.log(receipt);
+
+    } else {
+      console.log("Não existe evento em aberto")
+    }
+
+
+  } else {
+    console.log("contrato não existente");
+  }
+
+
+
+
+
+
+
 }
 
 if (require.main === module) {
-  main();
+  createMasterContract();
+  set_k();
+  existContract();
+  getUserContract();
+  createUserContract();
+  getOpenEvent();
+  CreateUserEvent();
+  closeUserEvent();
+  insert_path();
+  getPathEventOpen();
+  getPathEventClose();
+  getcoin();
+  existContract();
+  getEventOpen();
+  getEventClose();
+  getuserscore();
 }
 
-module.exports = exports = main
+// Export both functions
+module.exports = {
+  createMasterContract,
+  set_k,
+  existContract,
+  getUserContract,
+  createUserContract,
+  getOpenEvent,
+  CreateUserEvent,
+  closeUserEvent,
+  insert_path,
+  getPathEventOpen,
+  getPathEventClose,
+  existContract,
+  getEventOpen,
+  getcoin,
+  getEventClose,
+  getuserscore
+};
+
+
+//curl -X POST http://localhost:3000/create/contract
+//curl -X POST http://localhost:3000/create/event
+//./test
+
+//1000000000000000000n > 523069529879478500n

@@ -7,6 +7,8 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const cors = require('cors');
 var web3_eth_tx = require('./scripts/notls/web3_eth_tx');
+var monetiza = require('./scripts/notls/monetizatest');
+
 
 const app = express();
 app.use(bodyParser.json());
@@ -51,6 +53,7 @@ const DataItemSchema = new mongoose.Schema({
     userdata: UserDataSchema,
 });
 
+
 const RecordSchema = new mongoose.Schema({
     Data: String,
     wallet: String,
@@ -60,53 +63,152 @@ const RecordSchema = new mongoose.Schema({
 const contract = new mongoose.Schema({
     add: String,
     wallet: String,
-    data: [DataItemSchema],
+    volume: Number
+});
+
+
+const owner_contract = new mongoose.Schema({
+    add: String,
+});
+
+
+
+//cria contrato do usuario
+app.post('/create/contract', async (req, res) => {
+    owners = await get_constract();
+    main_contract = owners[owners.length - 1];
+    monetiza.createUserContract(main_contract.add, "0x4288201baC903F84648E81A07F793C9E7d893692");
+    res.send('Contrato criado com sucesso');
+});
+
+
+//recupera contrato do usuario
+app.post('/get/contract', async (req, res) => {
+    owners = await get_constract();
+    main_contract = owners[owners.length - 1];
+
+    if (await monetiza.existContract(mastercontract, wallet_user)) {
+
+        resp = await monetiza.getContract(main_contract.add, "0x4288201baC903F84648E81A07F793C9E7d893692");
+        res.json(resp);
+        //executar um rotina para fechar contrato
+    } else {
+        res.send('Não existe contrato');
+    }
+
+});
+
+
+//cria evento ligado a um contrato do usuario
+app.post('/create/event', async (req, res) => {
+    owners = await get_constract();
+    main_contract = owners[owners.length - 1];
+    const data = {
+        vin: "1GCJK34U06E258950",
+        t: new Date().toLocaleString(),
+        fuel_b: 30,
+        abastecimento: 1,
+        usertank: 40
+    };
+    if (await monetiza.CreateUserEvent(data, main_contract.add, "0x4288201baC903F84648E81A07F793C9E7d893692")) {
+        res.send('Evento criado com sucesso');
+    } else {
+        res.send('Problemas na criação do evento');
+    }
+
+});
+
+
+
+//fecha evento ligado a um contrato do usuario
+app.post('/close/event', async (req, res) => {
+   
+    owners = await get_constract();
+    main_contract = owners[owners.length - 1];
+    monetiza.getUserContract(main_contract.add, "0x4288201baC903F84648E81A07F793C9E7d893692");
+   
+    res.send('Evento fechado');
+});
+
+
+//recupera evento em aberto ligado a um contrato do usuario
+app.post('/get/event/open', async (req, res) => {
+
+    owners = await get_constract();
+    main_contract = owners[owners.length - 1];
+    resp = monetiza.getEventOpen(main_contract.add, "0x4288201baC903F84648E81A07F793C9E7d893692");
+    res.json(resp);
+
+});
+
+
+//recupera evento fechado ligado a um contrato do usuario
+app.post('/get/event/close', async (req, res) => {
+   
+    owners = await get_constract();
+    main_contract = owners[owners.length - 1];
+    resp = monetiza.getPathEventClose(main_contract.add, "0x4288201baC903F84648E81A07F793C9E7d893692");
+    res.json(resp);
+
+});
+
+
+//recupera dados veiculares de um evento aberto  ligado a um contrato do usuario
+app.post('/get/path/open', async (req, res) => {
+    owners = await get_constract();
+    main_contract = owners[owners.length - 1];
+    resp = monetiza.getEventOpen(main_contract.add, "0x4288201baC903F84648E81A07F793C9E7d893692");
+    res.json(resp);
+});
+
+
+//recupera dados veiculares de eventos fechados  ligado a um contrato do usuario
+app.post('/get/path/close', async (req, res) => {
+    owners = await get_constract();
+    main_contract = owners[owners.length - 1];
+    resp = monetiza.getEventClose(main_contract.add, "0x4288201baC903F84648E81A07F793C9E7d893692");
+    res.json(resp);
+});
+
+//recupera o score do user ligado a um contrato do usuario
+app.post('/get/score', async (req, res) => {
+    owners = await get_constract();
+    main_contract = owners[owners.length - 1];
+    resp = monetiza.getPath(main_contract.add, "0x4288201baC903F84648E81A07F793C9E7d893692");
+    res.json(resp);
+});
+
+
+//monetiza o user ligado a um contrato do usuario
+app.post('/get/coin', async (req, res) => {
+    owners = await get_constract();
+    main_contract = owners[owners.length - 1];
+    resp = monetiza.getcoin(main_contract.add, "0x4288201baC903F84648E81A07F793C9E7d893692");
+    res.json(resp);
+   
 });
 
 
 
 
 
-app.post('/create_contract', (req, res) => {
-    
-    res.send('Solicitação POST recebida com sucesso!');
-});
 
-/*
-const trajetodataSchema = new mongoose.Schema({
-  storedHash: { type: String, required: true },  // Store bytes32 as hex string
-  dist: { type: Number, required: true },        // meters
-  fuel: { type: Number, required: true },        // percent
-  time: { type: Number, required: true },        // seconds
-  timeless: { type: Number, required: true }     // seconds
-});
-*/
 
-const Record = mongoose.model('Record', RecordSchema);
 
-app.post('/receive', (req, res) => {
-    web3_eth_tx.main(req.body);
-    res.send('Solicitação POST recebida com sucesso!');
-});
-
-app.post('/vehicledata', async (req, res) => {
+app.post('/process/vehicledata', async (req, res) => {
+    const Record = mongoose.model('Record', RecordSchema);
     //console.log(req.body);
-    console.log(JSON.stringify(req.body, null, 2));
-    // MongoDB URI (replace with yours if needed)
-    const uri = 'mongodb://admin:password@localhost:27017/monetiza?authSource=admin';
-    //0xC9C913c8c3C1Cd416d80A0abF475db2062F161f6
-    // Connect to MongoDB
-    mongoose.connect(uri)
-        .then(() => console.log("Connected to MongoDB 🚀"))
-        .catch(err => console.error("Connection error:", err));
+    //console.log(JSON.stringify(req.body, null, 2));
 
     try {
         const record = new Record(req.body);
-        const saved = await record.save();
-        console.log("foi");
-        console.log(record.wallet);
-        web3_eth_tx.main(record.wallet);   
-        res.status(201).json(saved);
+        const hash = await record.save();
+        //console.log(hash._id);
+        //console.log(record.wallet);
+        owners = await get_constract();
+        main_contract = owners[owners.length - 1];
+        monetiza.insert_path(hash, record, main_contract.add, "0x4288201baC903F84648E81A07F793C9E7d893692");
+        res.status(201).json({ mensagem: "foi" });
     } catch (err) {
         console.log(err.message);
         res.status(400).json({ error: err.message });
@@ -114,13 +216,12 @@ app.post('/vehicledata', async (req, res) => {
 
 });
 
-app.post('/createcontract', async (req,res)=>{
 
+app.post('/receive', (req, res) => {
+    web3_eth_tx.main(req.body);
+    res.send('Solicitação POST recebida com sucesso!');
 });
 
-app.post('/close', async (req,res)=>{
-
-});
 
 
 app.get('/login', (req, res) => {
@@ -157,27 +258,44 @@ app.get('/admin', (req, res) => {
 
 
 app.get('/', (req, res) => {
-    res.send('JWT Server is running');
+    res.json('JWT Server is running');
 });
 
+async function init() {
+    var a = await monetiza.createMasterContract();
+    const OwnerContract = mongoose.model('OwnerContract', owner_contract);
+    const doc = new OwnerContract({ add: a });
+    const result = await doc.save();
+}
 
-app.listen(3000, () => {
+async function get_constract() {
+    const OwnerContract = mongoose.model('OwnerContract', owner_contract);
+    const owners = await OwnerContract.find();
+    return owners;
+}
+
+
+app.listen(3000, async () => {
+    const uri = 'mongodb://admin:password@localhost:27017/monetiza?authSource=admin';
+    //0xC9C913c8c3C1Cd416d80A0abF475db2062F161f6
+    // Connect to MongoDB
+    mongoose.connect(uri)
+        .then(() => console.log("Connected to MongoDB 🚀"))
+        .catch(err => console.error("Connection error:", err));
+
+    owners = await get_constract();
+    if (owners.length == 0) {
+        await init();
+        owners = await get_constract();
+        main_contract = owners[owners.length - 1];
+        monetiza.set_k(main_contract.add, 3);
+    } else {
+        owners = await get_constract();
+        main_contract = owners[owners.length - 1];
+        // con
+        //monetiza.set_k(main_contract.add, 3);
+    }
+    //criar contrato, retornar e salvar no mongodb  
     console.log('JWT Server listening on port 3000');
 });
 
-
-/*
-   struct Tupla {
-        string t; // timestamp
-        string pos; // posição
-        string comb; // combustível
-    }
-
-    struct Trajeto {
-        Tupla[] tuplas; // sequência de tuplas
-        uint completudel;
-        uint frequencial;
-
-    }
-
-*/

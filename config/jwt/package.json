@@ -10,23 +10,30 @@
     "public-transaction": "node scripts/public_tx.js",
     "private-transaction": "node scripts/private_tx.js"
   },
-  "license": "ISC",
+  "license": "Apache-2.0",
   "dependencies": {
-    "@ethereumjs/common": "^10.0.0",
-    "@ethereumjs/tx": "^10.0.0",
-    "@nomicfoundation/hardhat-ethers": "^4.0.0",
-    "@nomicfoundation/hardhat-network-helpers": "^3.0.0",
+    "@ethereumjs/common": "^4.0.0",
+    "@ethereumjs/tx": "^5.0.0",
+    "@nomicfoundation/hardhat-ethers": "^3.0.0",
+    "@nomicfoundation/hardhat-network-helpers": "^1.0.0",
+    "@nomicfoundation/hardhat-toolbox": "^3.0.0",
+    "@nomicfoundation/hardhat-verify": "^1.0.0",
     "async-promise-pool": "^1.0.6",
     "cors": "^2.8.5",
     "ethers": "^6.15.0",
     "express": "^5.1.0",
     "fs-extra": "^11.3.1",
+    "hardhat-gas-reporter": "^1.0.8",
+    "haversine-distance": "^1.2.4",
     "i": "^0.3.7",
     "jsonwebtoken": "^9.0.2",
+    "linearregressionjs": "^1.0.4",
+    "ml-regression": "^6.3.0",
+    "ml-regression-simple-linear": "^3.0.1",
     "mongoose": "^8.17.0",
     "npm": "^11.5.2",
-    "solc": "^0.8.30",
-    "web3": "^4.16.0",
-    "web3js-quorum": "^22.4.0"
+    "solc": "0.8.10",
+    "web3": "1.10.2",
+    "web3js-quorum": "22.4.0"
   }
 }

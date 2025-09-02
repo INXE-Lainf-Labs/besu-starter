@@ -21,7 +21,3 @@ contract Carbon {
         return (value);
     }
 }
-
-//event obj
-
-//lista obj

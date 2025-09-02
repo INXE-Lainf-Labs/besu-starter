@@ -9,7 +9,7 @@ const accountPrivateKey = besu.rpcnode.accountPrivateKey;
 
 // abi and bytecode generated from simplestorage.sol:
 // > solcjs --bin --abi simplestorage.sol
-const contractJsonPath = path.resolve(__dirname, '../../','contracts','SimpleStorage.json');
+const contractJsonPath = path.resolve(__dirname, 'cd../','contracts','SimpleStorage.json');
 const contractJson = JSON.parse(fs.readFileSync(contractJsonPath));
 const contractAbi = contractJson.abi;
 const contractBytecode = contractJson.evm.bytecode.object

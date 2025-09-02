@@ -8,7 +8,7 @@ const host = besu.rpcnode.url;
 // one of the seeded accounts
 const accountAPrivateKey = accounts.a.privateKey;
 
-async function main(){
+async function main() {
   const provider = new ethers.JsonRpcProvider(host);
 
   const walletA = new ethers.Wallet(accountAPrivateKey, provider);
@@ -21,23 +21,30 @@ async function main(){
   console.log("Account B has balance of: " + accountBBalance);
 
   const nonce = await provider.getTransactionCount(walletA.address);
-  const feeData = await provider.getFeeData();
-  const gasLimit = await provider.estimateGas({from: walletA.address, value: ethers.parseEther("0.01")});
+  console.log(nonce);
 
   // send some eth from A to B
+  /*
   const txn = {
     nonce: nonce,
     from: walletA.address,
-    to: walletB.address, 
+    to: 
     value: 0x10,  //amount of eth to transfer
-    gasPrice: feeData.gasPrice, //ETH per unit of gas
-    gasLimit: gasLimit //max number of gas units the tx is allowed to use
+  };
+
+  */
+  const txn = {
+    to: walletB.address,
+    value:0x10,
+    //gasLimit: 21000,
+    //gasPrice: (await provider.getFeeData()).gasPrice,
+    nonce: nonce
   };
 
   console.log("create and sign the txn")
   const signedTx = await walletA.sendTransaction(txn);
-  await signedTx.wait();
-  console.log("tx transactionHash: " + signedTx.hash);
+  const receipt = await signedTx.wait(1);
+  console.log(receipt);
 
   //After the transaction there should be some ETH transferred
   accountABalance = await provider.getBalance(walletA.address);
