@@ -57,6 +57,12 @@ contract MonetizaFactory {
         k = _k;
     }
 
+    function getEvents(uint id) public view returns (Event memory) {
+        require(id < counter, "Invalid contract ID");
+        Monetiza monetiza = Monetiza(contracts[id]);
+        return monetiza.getEvents();  // Solidity automatically returns a copy
+    }
+
     function getK() public view returns (uint) {
         return k;
 
@@ -82,7 +88,14 @@ contract MonetizaFactory {
     }
 
 
-    function getcoin(uint id) public returns  (uint) {
+    function setcoin(uint id) public {
+        require(id < counter, "Invalid contract ID");
+        Monetiza monetiza = Monetiza(contracts[id]);
+        monetiza.setcoin();
+    }
+
+
+    function getcoin(uint id) public view returns (uint) {
         require(id < counter, "Invalid contract ID");
         Monetiza monetiza = Monetiza(contracts[id]);
         return  monetiza.getcoin();
@@ -263,9 +276,13 @@ contract Monetiza {
         }
     }
 
-    function getcoin() public returns (uint) {
-        uint help = coin * confianca;
+
+    function setcoin() public {
         coin = 0;
+    }
+
+    function getcoin() public view returns (uint) {
+        uint help = coin * confianca;
         return help;
     }
 
@@ -286,6 +303,7 @@ contract Monetiza {
             uint timelesstotal = 0;
 
             if (varTrajetos.listtrajetos.length > 0) {
+                emit TrajetosRegistered(wallet,contractAddress, idEvent, varTrajetos.listtrajetos);
                 for (uint i = 0; i < varTrajetos.listtrajetos.length; i++) {
                     compltotal += varTrajetos.listtrajetos[i].fuel;
                     timelesstotal += varTrajetos.listtrajetos[i].timeless;
@@ -314,6 +332,10 @@ contract Monetiza {
                     frequencia = 1e18;
                 }
 
+                unchecked {
+                     coin++;
+                }
+
                 // confianca (fixando escala)
                 require(m <= 1e18, "m invalido");
                 uint halfSum = (completude + frequencia) / 2;
@@ -323,6 +345,7 @@ contract Monetiza {
 
                 delete varTrajetos.listtrajetos;
             } else {
+                events.fuel_e = events.fuel_b;
                 uint constVal = 1e16;
                 confianca = (confianca * m + ((constVal + constVal) / 2) * (1e18 - m)) / 1e18;
                 emit userScore(wallet, contractAddress, idEvent, constVal, constVal, confianca);
@@ -330,7 +353,6 @@ contract Monetiza {
 
             unchecked {
                 idEvent++;
-                coin++;
             }
 
             

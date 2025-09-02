@@ -297,7 +297,7 @@ curl --header "Content-Type: application/json" \
     }
   ]
 }
-' http://localhost:3000/process/vehicledata
+' http://localhost:3000/send/data/vehicle
 
 
 

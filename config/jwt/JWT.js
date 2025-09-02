@@ -77,7 +77,7 @@ const owner_contract = new mongoose.Schema({
 app.post('/create/contract', async (req, res) => {
     owners = await get_constract();
     main_contract = owners[owners.length - 1];
-    monetiza.createUserContract(main_contract.add, "0x4288201baC903F84648E81A07F793C9E7d893692");
+    await monetiza.createUserContract(main_contract.add, "0x4288201baC903F84648E81A07F793C9E7d893692");
     res.send('Contrato criado com sucesso');
 });
 
@@ -87,9 +87,9 @@ app.post('/get/contract', async (req, res) => {
     owners = await get_constract();
     main_contract = owners[owners.length - 1];
 
-    if (await monetiza.existContract(mastercontract, wallet_user)) {
+    if (await monetiza.existContract(main_contract.add, "0x4288201baC903F84648E81A07F793C9E7d893692")) {
 
-        resp = await monetiza.getContract(main_contract.add, "0x4288201baC903F84648E81A07F793C9E7d893692");
+        resp = await monetiza.getUserContract(main_contract.add, "0x4288201baC903F84648E81A07F793C9E7d893692");
         res.json(resp);
         //executar um rotina para fechar contrato
     } else {
@@ -122,33 +122,50 @@ app.post('/create/event', async (req, res) => {
 
 //fecha evento ligado a um contrato do usuario
 app.post('/close/event', async (req, res) => {
-   
+
     owners = await get_constract();
     main_contract = owners[owners.length - 1];
-    monetiza.getUserContract(main_contract.add, "0x4288201baC903F84648E81A07F793C9E7d893692");
-   
+    await monetiza.closeUserEvent(main_contract.add, "0x4288201baC903F84648E81A07F793C9E7d893692");
     res.send('Evento fechado');
 });
 
 
 //recupera evento em aberto ligado a um contrato do usuario
 app.post('/get/event/open', async (req, res) => {
-
     owners = await get_constract();
     main_contract = owners[owners.length - 1];
-    resp = monetiza.getEventOpen(main_contract.add, "0x4288201baC903F84648E81A07F793C9E7d893692");
-    res.json(resp);
+    resp = await monetiza.getEventOpen(main_contract.add, "0x4288201baC903F84648E81A07F793C9E7d893692");
+
+    const replacer = (key, value) => {
+        if (typeof value === 'bigint') {
+            return value.toString();
+        }
+        return value;
+    };
+
+    const jsonString = JSON.stringify(resp, replacer);
+    console.log(jsonString);
+    res.json(jsonString);
 
 });
 
 
 //recupera evento fechado ligado a um contrato do usuario
 app.post('/get/event/close', async (req, res) => {
-   
+
     owners = await get_constract();
     main_contract = owners[owners.length - 1];
-    resp = monetiza.getPathEventClose(main_contract.add, "0x4288201baC903F84648E81A07F793C9E7d893692");
-    res.json(resp);
+    resp = await monetiza.getEventClose(main_contract.add, "0x4288201baC903F84648E81A07F793C9E7d893692");
+    const replacer = (key, value) => {
+        if (typeof value === 'bigint') {
+            return value.toString();
+        }
+        return value;
+    };
+
+    const jsonString = JSON.stringify(resp, replacer);
+    console.log(jsonString);
+    res.json(jsonString);
 
 });
 
@@ -157,8 +174,17 @@ app.post('/get/event/close', async (req, res) => {
 app.post('/get/path/open', async (req, res) => {
     owners = await get_constract();
     main_contract = owners[owners.length - 1];
-    resp = monetiza.getEventOpen(main_contract.add, "0x4288201baC903F84648E81A07F793C9E7d893692");
-    res.json(resp);
+    resp = await monetiza.getEventOpen(main_contract.add, "0x4288201baC903F84648E81A07F793C9E7d893692");
+    const replacer = (key, value) => {
+        if (typeof value === 'bigint') {
+            return value.toString();
+        }
+        return value;
+    };
+
+    const jsonString = JSON.stringify(resp, replacer);
+    console.log(jsonString);
+    res.json(jsonString);
 });
 
 
@@ -166,16 +192,34 @@ app.post('/get/path/open', async (req, res) => {
 app.post('/get/path/close', async (req, res) => {
     owners = await get_constract();
     main_contract = owners[owners.length - 1];
-    resp = monetiza.getEventClose(main_contract.add, "0x4288201baC903F84648E81A07F793C9E7d893692");
-    res.json(resp);
+    resp = monetiza.getPathEventClose(main_contract.add, "0x4288201baC903F84648E81A07F793C9E7d893692");
+    const replacer = (key, value) => {
+        if (typeof value === 'bigint') {
+            return value.toString();
+        }
+        return value;
+    };
+
+    const jsonString = JSON.stringify(resp, replacer);
+    console.log(jsonString);
+    res.json(jsonString);
 });
 
 //recupera o score do user ligado a um contrato do usuario
 app.post('/get/score', async (req, res) => {
     owners = await get_constract();
     main_contract = owners[owners.length - 1];
-    resp = monetiza.getPath(main_contract.add, "0x4288201baC903F84648E81A07F793C9E7d893692");
-    res.json(resp);
+    resp = await monetiza.getuserscore(main_contract.add, "0x4288201baC903F84648E81A07F793C9E7d893692");
+    const replacer = (key, value) => {
+        if (typeof value === 'bigint') {
+            return value.toString();
+        }
+        return value;
+    };
+
+    const jsonString = JSON.stringify(resp, replacer);
+    console.log(jsonString);
+    res.json(jsonString);
 });
 
 
@@ -183,23 +227,25 @@ app.post('/get/score', async (req, res) => {
 app.post('/get/coin', async (req, res) => {
     owners = await get_constract();
     main_contract = owners[owners.length - 1];
-    resp = monetiza.getcoin(main_contract.add, "0x4288201baC903F84648E81A07F793C9E7d893692");
-    res.json(resp);
-   
+    resp = await monetiza.getcoin(main_contract.add, "0x4288201baC903F84648E81A07F793C9E7d893692");
+    const replacer = (key, value) => {
+        if (typeof value === 'bigint') {
+            return value.toString();
+        }
+        return value;
+    };
+
+    const jsonString = JSON.stringify(resp, replacer);
+    console.log(jsonString);
+    res.json(jsonString);
+
 });
 
 
 
-
-
-
-
-
-app.post('/process/vehicledata', async (req, res) => {
+app.post('/send/data/vehicle', async (req, res) => {
     const Record = mongoose.model('Record', RecordSchema);
-    //console.log(req.body);
-    //console.log(JSON.stringify(req.body, null, 2));
-
+ 
     try {
         const record = new Record(req.body);
         const hash = await record.save();
@@ -207,8 +253,8 @@ app.post('/process/vehicledata', async (req, res) => {
         //console.log(record.wallet);
         owners = await get_constract();
         main_contract = owners[owners.length - 1];
-        monetiza.insert_path(hash, record, main_contract.add, "0x4288201baC903F84648E81A07F793C9E7d893692");
-        res.status(201).json({ mensagem: "foi" });
+        await monetiza.insert_path(hash, record, main_contract.add, "0x4288201baC903F84648E81A07F793C9E7d893692");
+        res.status(201).json({ mensagem: "dados veiculares inseridos" });
     } catch (err) {
         console.log(err.message);
         res.status(400).json({ error: err.message });
@@ -221,8 +267,6 @@ app.post('/receive', (req, res) => {
     web3_eth_tx.main(req.body);
     res.send('Solicitação POST recebida com sucesso!');
 });
-
-
 
 app.get('/login', (req, res) => {
     const a = {
