@@ -12,6 +12,7 @@ from src.users.service import (
     get_users,
     create_user,
     update_user,
+    delete_user
 )
 
 users_v1_router = APIRouter(prefix="/v1/users")
@@ -72,3 +73,17 @@ async def put_user(
         )
     return {"details": "User updated successfully"}
     
+
+async def delete_user(
+        user: PutUserRequest,
+        authorization: Annotated[str | None, Header()] = None,
+        user_repo: UserBaseRepository = Depends(get_user_repository)
+):
+    is_admin = await check_is_admin(authorization, user_repo)
+
+    if is_admin:
+        await delete_user(
+            user_data=user,
+            user_repo=user_repo,
+        )
+    return {"details": "User deleted successfully"}

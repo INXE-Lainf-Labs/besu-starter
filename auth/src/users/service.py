@@ -53,3 +53,9 @@ async def update_user(
     validate_email(new_user_data.email)
     user = await user_repo.update_user(new_user_data.email, new_user_data.first_name, new_user_data.last_name, new_user_data.is_active, new_user_data.is_admin)
     return user
+
+async def delete_user(
+    user_data: PutUserRequest,
+    user_repo: UserBaseRepository,
+):
+    return "sucesso"
