@@ -3,10 +3,7 @@
 
 ## Metamesk and Besu
  <div align="justify">
-Este documento tem como objetivo elucidar alguns pontos de desenvolvimento utilizando a plataforma besu em conjunto com o metamesk. A implementação conta com: 
-
-
-Três abordagens principais:
+Este documento tem como objetivo elucidar alguns pontos de desenvolvimento utilizando a plataforma besu em conjunto com o metamesk. A implementação conta com três abordagens principais:
 
 1 - Transferência via código (node.js + web3): neste método a transferência é executada diretamente pelo código utilizando a biblioteca web3 e a chave privada do remetente. A chave privada costuma ser lida de um arquivo inseguro.
 
