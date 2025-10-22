@@ -48,18 +48,7 @@ services:
     ports:
       - 3000:3000
 
-  caddy:
-    image: caddy:latest
-    restart: "on-failure"
-    container_name: caddy
-    ports:
-      - 80:80
-      - 441:441
-    volumes:
-      - ./config/caddy/Caddyfile:/etc/caddy/Caddyfile
-    networks:
-      quorum-dev-quickstart:
-        ipv4_address: 172.16.239.71
+
 
   validator1:
     <<: *besu-def
@@ -248,28 +237,10 @@ services:
       quorum-dev-quickstart:
         ipv4_address: 172.16.239.43
 
-  mongo-express:
-    image: mongo-express
-    container_name: mongo-express
-    ports:
-      - 8081:8081
-    environment:
-      ME_CONFIG_MONGODB_URL: "mongodb://admin:password@mongodb:27017"
-      ME_CONFIG_BASICAUTH: true
-      ME_CONFIG_BASICAUTH_USERNAME: admin
-      ME_CONFIG_BASICAUTH_PASSWORD: q
-    links:
-      - mongodb
-    networks:
-      quorum-dev-quickstart:
-        ipv4_address: 172.16.239.42
-    depends_on:
-      - mongodb
 
 volumes:
   public-keys:
-  mongodb_data:
-
+ 
 networks:
   quorum-dev-quickstart:
     name: quorum-dev-quickstart
