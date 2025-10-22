@@ -12,10 +12,19 @@ import contractJson from './assets/contract/SendEther.json';
 function App() {
 
 
+  //It's necessary to call a function from the contract.
   const contractAbi = contractJson.abi;
+
+  //it's necessary to get the bytecode from the contract
   const contractBytecode = contractJson.evm.bytecode.object;
+
+  //For better blockchain hosting, containerize the app and route it through Caddy.
   const host = "http://localhost:8545";
+
+  //address from smart contract 
   var adresscontract = "";
+
+
 
   const MMSDK = new MetaMaskSDK({
     dappMetadata: {
@@ -26,10 +35,9 @@ function App() {
   })
 
   // Network configurations
-
   async function connect() {
 
-    console.log("oi")
+    console.log("connect to network")
 
 
     const network = {
@@ -96,8 +104,10 @@ function App() {
 
   }
 
-
+  //receive eth from a wallet in the blockchain,. 
   async function receive() {
+    console.log("receive 1 eth from blockchain")
+
     const ethereum = MMSDK.getProvider()
 
     // Connect to MetaMask
@@ -163,6 +173,8 @@ function App() {
 
   async function sendTransaction(recipientAddress: any, amount: any) {
 
+    console.log("check transaction")
+
     const ethereum = MMSDK.getProvider()
 
 
@@ -202,6 +214,8 @@ function App() {
 
 
   async function send() {
+    console.log("send eth to wallet")
+
     const wallet = (document.getElementById("wallet") as HTMLInputElement).value
     const value = (document.getElementById("wallet") as HTMLInputElement).value
     const status = document.getElementById("status");
@@ -229,6 +243,8 @@ function App() {
 
 
   async function deploy() {
+
+    console.log("deploy contract")
     const ethereum = MMSDK.getProvider()
     try {
       console.log("Contract bytecode size:", contractBytecode.length / 2, "bytes");
@@ -279,6 +295,8 @@ function App() {
   }
 
   async function sendViaTransfer() {
+
+    console.log("send transaction  through contract function sendViaTransfer")
     const ethereum = MMSDK.getProvider()
     // Create provider from MetaMask
     if (ethereum && adresscontract != '') {
@@ -290,14 +308,9 @@ function App() {
 
       console.log("Connected with address:", userAddress);
 
-      // 2. CORREÇÃO CRÍTICA: Use o 'signer' ao invés do 'provider'
-      //    para inicializar o contrato, permitindo enviar transações.
       const contract = new ethers.Contract(adresscontract, contractAbi, signer);
-      //const recipientAddress = "0xC0F53964CE977EB8e1Ccf0427527B36f7F3Ab9Fd";
-      // 2. Defina o valor a ser enviado (ex: 0.01 Ether, convertido para Wei)
       const amountToSend = ethers.parseEther("0.01");
 
-      // 3. A função de escrita (transação) é chamada com sucesso.
       const tx = await contract.sendViaTransfer(
         "0xC0F53964CE977EB8e1Ccf0427527B36f7F3Ab9Fd",
         {
@@ -306,20 +319,21 @@ function App() {
         }
 
       );
-
-      // Recomenda-se esperar a confirmação da transação
       const receipt = await tx.wait();
 
       console.log("Transação enviada com sucesso. Hash:", tx.hash);
 
-      
+
       return tx;
     }
 
   }
 
   async function sendViaSend() {
-     const ethereum = MMSDK.getProvider()
+
+    console.log("send transaction  through contract function sendViaSend")
+
+    const ethereum = MMSDK.getProvider()
     // Create provider from MetaMask
     if (ethereum && adresscontract != '') {
       const provider: any = new ethers.BrowserProvider(ethereum);
@@ -330,14 +344,10 @@ function App() {
 
       console.log("Connected with address:", userAddress);
 
-      // 2. CORREÇÃO CRÍTICA: Use o 'signer' ao invés do 'provider'
-      //    para inicializar o contrato, permitindo enviar transações.
+
       const contract = new ethers.Contract(adresscontract, contractAbi, signer);
-      //const recipientAddress = "0xC0F53964CE977EB8e1Ccf0427527B36f7F3Ab9Fd";
-      // 2. Defina o valor a ser enviado (ex: 0.01 Ether, convertido para Wei)
       const amountToSend = ethers.parseEther("0.02");
 
-      // 3. A função de escrita (transação) é chamada com sucesso.
       const tx = await contract.sendViaSend(
         "0xC0F53964CE977EB8e1Ccf0427527B36f7F3Ab9Fd",
         {
@@ -347,34 +357,35 @@ function App() {
 
       );
 
-      // Recomenda-se esperar a confirmação da transação
       const receipt = await tx.wait();
 
       console.log("Transação enviada com sucesso. Hash:", tx.hash);
 
-   
+
       return tx;
     }
 
   }
 
   async function sendViaCall() {
-     const ethereum = MMSDK.getProvider()
+
+    console.log("send transaction  through contract function sendViaSend")
+
+
+    const ethereum = MMSDK.getProvider()
     // Create provider from MetaMask
     if (ethereum && adresscontract != '') {
       const provider: any = new ethers.BrowserProvider(ethereum);
 
-      // 1. O Signer tem a chave do usuário e a capacidade de assinar transações.
       const signer = await provider.getSigner();
       const userAddress = await signer.getAddress();
 
       console.log("Connected with address:", userAddress);
 
       const contract = new ethers.Contract(adresscontract, contractAbi, signer);
-      
+
       const amountToSend = ethers.parseEther("0.03");
 
-      // 3. A função de escrita (transação) é chamada com sucesso.
       const tx = await contract.sendViaCall(
         "0xC0F53964CE977EB8e1Ccf0427527B36f7F3Ab9Fd",
         {
@@ -384,7 +395,6 @@ function App() {
 
       );
 
-      // Recomenda-se esperar a confirmação da transação
       const receipt = await tx.wait();
 
       console.log("Transação enviada com sucesso. Hash:", tx.hash);
