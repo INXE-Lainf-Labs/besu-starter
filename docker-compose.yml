@@ -1,6 +1,4 @@
-
-x-besu-def:
-  &besu-def
+x-besu-def: &besu-def
   restart: "on-failure"
   image: hyperledger/besu:${BESU_VERSION:-latest}
   env_file:
@@ -18,28 +16,37 @@ x-besu-def:
       --p2p-host=$$(hostname -i) \
       --rpc-http-api=EEA,WEB3,ETH,NET,TRACE,DEBUG,ADMIN,TXPOOL,PERM,${BESU_CONS_ALGO:-QBFT} \
 
-x-ethsignerProxy-def:
-  &ethsignerProxy-def
+x-ethsignerProxy-def: &ethsignerProxy-def
   restart: "on-failure"
   image: consensys/ethsigner:${ETHSIGNER_VERSION:-latest}
-  command: [
-    "--chain-id=1337",
-    "--http-listen-host=0.0.0.0",
-    "--downstream-http-port=8545",
-    "--downstream-http-host=rpcnode-admin",
-    "file-based-signer",
-    "-k",
-    "/opt/ethsigner/keyfile",
-    "-p",
-    "/opt/ethsigner/passwordfile"
-  ]
+  command:
+    [
+      "--chain-id=1337",
+      "--http-listen-host=0.0.0.0",
+      "--downstream-http-port=8545",
+      "--downstream-http-host=rpcnode-admin",
+      "file-based-signer",
+      "-k",
+      "/opt/ethsigner/keyfile",
+      "-p",
+      "/opt/ethsigner/passwordfile",
+    ]
   ports:
     - 8545
 
- 
-
 services:
-
+  nodetls:
+    restart: "on-failure"
+    build:
+      context: ./config/jwt
+      dockerfile: ./Dockerfile
+    container_name: node
+    image: nodetls
+    networks:
+      quorum-dev-quickstart:
+        ipv4_address: 172.16.239.72
+    ports:
+      - 3000:3000
 
   caddy:
     image: caddy:latest
@@ -54,9 +61,8 @@ services:
       quorum-dev-quickstart:
         ipv4_address: 172.16.239.71
 
-
   validator1:
-    << : *besu-def
+    <<: *besu-def
     ports:
       - 21001:8545/tcp
       - 30303
@@ -75,7 +81,7 @@ services:
         ipv4_address: 172.16.239.11
 
   validator2:
-    << : *besu-def
+    <<: *besu-def
     ports:
       - 21002:8545/tcp
       - 30303
@@ -95,7 +101,7 @@ services:
         ipv4_address: 172.16.239.12
 
   validator3:
-    << : *besu-def
+    <<: *besu-def
     ports:
       - 21003:8545/tcp
       - 30303
@@ -115,7 +121,7 @@ services:
         ipv4_address: 172.16.239.13
 
   validator4:
-    << : *besu-def
+    <<: *besu-def
     ports:
       - 21004:8545/tcp
       - 30303
@@ -150,7 +156,7 @@ services:
         --p2p-host=$$(hostname -i) \
         --rpc-http-api=EEA,WEB3,ETH,NET,TRACE,DEBUG,ADMIN,TXPOOL,PERM,${BESU_CONS_ALGO:-QBFT} \
         --rpc-http-authentication-jwt-public-key-file=/config/publicRSAKey.pem \
-     
+
     environment:
       - OTEL_RESOURCE_ATTRIBUTES=service.name=rpcnode,service.version=${BESU_VERSION:-latest}
     volumes:
@@ -168,7 +174,6 @@ services:
     networks:
       quorum-dev-quickstart:
         ipv4_address: 172.16.239.15
-
 
   rpcnode-user:
     container_name: rpcnode-user
@@ -213,10 +218,10 @@ services:
       - 25000:25000/tcp
     networks:
       quorum-dev-quickstart:
-       ipv4_address: 172.16.239.31
-  
+        ipv4_address: 172.16.239.31
+
   ethsignerProxy:
-    << : *ethsignerProxy-def
+    <<: *ethsignerProxy-def
     volumes:
       - ./config/ethsigner/password:/opt/ethsigner/passwordfile
       - ./config/ethsigner/key:/opt/ethsigner/keyfile
@@ -228,7 +233,6 @@ services:
     networks:
       quorum-dev-quickstart:
         ipv4_address: 172.16.239.40
-
 
   mongodb:
     image: mongo:latest
@@ -250,7 +254,7 @@ services:
     ports:
       - 8081:8081
     environment:
-      ME_CONFIG_MONGODB_URL: 'mongodb://admin:password@mongodb:27017'
+      ME_CONFIG_MONGODB_URL: "mongodb://admin:password@mongodb:27017"
       ME_CONFIG_BASICAUTH: true
       ME_CONFIG_BASICAUTH_USERNAME: admin
       ME_CONFIG_BASICAUTH_PASSWORD: q
@@ -265,7 +269,6 @@ services:
 volumes:
   public-keys:
   mongodb_data:
-
 
 networks:
   quorum-dev-quickstart:
