@@ -49,6 +49,20 @@ services:
       - 3000:3000
 
 
+  caddy:
+    image: caddy:latest
+    restart: "on-failure"
+    container_name: caddy
+    ports:
+      - 80:80
+      - 441:441
+    volumes:
+      - ./config/caddy/Caddyfile:/etc/caddy/Caddyfile
+    networks:
+      quorum-dev-quickstart:
+        ipv4_address: 172.16.239.71 
+
+
 
   validator1:
     <<: *besu-def
@@ -223,19 +237,7 @@ services:
       quorum-dev-quickstart:
         ipv4_address: 172.16.239.40
 
-  mongodb:
-    image: mongo:latest
-    container_name: mongodb
-    ports:
-      - "27017:27017"
-    volumes:
-      - mongodb_data:/data/db
-    environment:
-      MONGO_INITDB_ROOT_USERNAME: admin
-      MONGO_INITDB_ROOT_PASSWORD: password
-    networks:
-      quorum-dev-quickstart:
-        ipv4_address: 172.16.239.43
+
 
 
 volumes:

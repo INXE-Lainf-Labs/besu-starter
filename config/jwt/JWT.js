@@ -7,7 +7,6 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const cors = require('cors');
 var web3_eth_tx = require('./scripts/notls/web3_eth_tx');
-var monetiza = require('./scripts/notls/monetizatest');
 const JSONStream = require('JSONStream');
 
 
