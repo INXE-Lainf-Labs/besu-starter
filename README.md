@@ -2,8 +2,9 @@
 
 
 ## Metamesk and Besu
-
+ <div align="justify">
 Este documento tem como objetivo elucidar alguns pontos de desenvolvimento utilizando a plataforma besu em conjunto com o metamesk. A implementação conta com: 
+
 
 Três abordagens principais:
 
@@ -14,6 +15,7 @@ Três abordagens principais:
 
 3 - Interação via contrato inteligente próprio: neste cenário o desenvolvedor (ou uma carteira controladora) faz o deploy de um contrato que gerencia as transferências. Após o deploy, existem diferentes formas de interação/execução dependendo da lógica do contrato e dos requisitos de segurança.
 
+</p>
 
 ## Deploy
 
@@ -66,6 +68,6 @@ VITE v7.0.0  ready in 352 ms
 ```
 
 Acesse o Local pelo navegador e, primeiramente, clique no botão Conectar à rede. Em seguida, utilize o botão Receive para receber um criptoativo. Após o recebimento, realize o deploy do contrato inteligente e aguarde até que a transação seja concluída. Todo o processo pode ser acompanhado pelo console do navegador. Na interface, estarão disponíveis três métodos para o envio de pequenas quantias de Ether para diferentes carteiras. Caso seja necessário alterar os valores definidos no contrato (metamask/src/assets/contract/sendethers.sol), é preciso recompilá-lo. Já para modificar as carteiras de destino, será necessário ajustar o código-fonte.
-
+ </div>
 
 
