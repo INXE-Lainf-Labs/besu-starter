@@ -8,6 +8,7 @@ const bodyParser = require('body-parser');
 const cors = require('cors');
 var web3_eth_tx = require('./scripts/notls/web3_eth_tx');
 var monetiza = require('./scripts/notls/monetizatest');
+const JSONStream = require('JSONStream');
 
 
 const app = express();
@@ -104,8 +105,8 @@ app.post('/create/event', async (req, res) => {
     owners = await get_constract();
     main_contract = owners[owners.length - 1];
     const data = {
-        vin: "1GCJK34U06E258950",
-        t: new Date().toLocaleString(),
+        vin: "1GBJC34R9XF017297",
+        t: new Date().toLocaleString('en-GB'),
         fuel_b: 30,
         abastecimento: 1,
         usertank: 40
@@ -144,8 +145,7 @@ app.post('/get/event/open', async (req, res) => {
     };
 
     const jsonString = JSON.stringify(resp, replacer);
-    console.log(jsonString);
-    res.json(jsonString);
+    res.send(jsonString);
 
 });
 
@@ -156,6 +156,16 @@ app.post('/get/event/close', async (req, res) => {
     owners = await get_constract();
     main_contract = owners[owners.length - 1];
     resp = await monetiza.getEventClose(main_contract.add, "0x4288201baC903F84648E81A07F793C9E7d893692");
+    // Set headers for streaming
+    res.setHeader('Content-Type', 'application/json');
+    res.setHeader('Transfer-Encoding', 'chunked');
+
+    // Create a transform stream that handles bigint conversion
+    const transformStream = JSONStream.stringify();
+
+    // Pipe the transform stream to the response
+    transformStream.pipe(res);
+
     const replacer = (key, value) => {
         if (typeof value === 'bigint') {
             return value.toString();
@@ -163,9 +173,18 @@ app.post('/get/event/close', async (req, res) => {
         return value;
     };
 
-    const jsonString = JSON.stringify(resp, replacer);
-    console.log(jsonString);
-    res.json(jsonString);
+    // Process each item and stream it
+    for (const item of resp) {
+        // Convert bigint to string for each item
+        const serializableItem = JSON.parse(JSON.stringify(item, (key, value) => {
+            return typeof value === 'bigint' ? value.toString() : value;
+        }));
+
+        transformStream.write(serializableItem);
+    }
+
+    // End the stream
+    transformStream.end();
 
 });
 
@@ -174,35 +193,68 @@ app.post('/get/event/close', async (req, res) => {
 app.post('/get/path/open', async (req, res) => {
     owners = await get_constract();
     main_contract = owners[owners.length - 1];
-    resp = await monetiza.getEventOpen(main_contract.add, "0x4288201baC903F84648E81A07F793C9E7d893692");
-    const replacer = (key, value) => {
-        if (typeof value === 'bigint') {
-            return value.toString();
-        }
-        return value;
-    };
+    resp = await monetiza.getPathEventOpen(main_contract.add, "0x4288201baC903F84648E81A07F793C9E7d893692");
+    // Set headers for streaming
+    res.setHeader('Content-Type', 'application/json');
+    res.setHeader('Transfer-Encoding', 'chunked');
 
-    const jsonString = JSON.stringify(resp, replacer);
-    console.log(jsonString);
-    res.json(jsonString);
+    // Create a transform stream that handles bigint conversion
+    const transformStream = JSONStream.stringify();
+
+    // Pipe the transform stream to the response
+    transformStream.pipe(res);
+
+
+    transformStream.write(resp);
+
+    // End the stream
+    transformStream.end();
 });
 
 
+//recuperar o array de dados no mongo 
 //recupera dados veiculares de eventos fechados  ligado a um contrato do usuario
 app.post('/get/path/close', async (req, res) => {
-    owners = await get_constract();
-    main_contract = owners[owners.length - 1];
-    resp = monetiza.getPathEventClose(main_contract.add, "0x4288201baC903F84648E81A07F793C9E7d893692");
-    const replacer = (key, value) => {
-        if (typeof value === 'bigint') {
-            return value.toString();
-        }
-        return value;
-    };
+    try {
+        owners = await get_constract();
+        main_contract = owners[owners.length - 1];
+        resp = await monetiza.getPathEventClose(main_contract.add, "0x4288201baC903F84648E81A07F793C9E7d893692");
 
-    const jsonString = JSON.stringify(resp, replacer);
-    console.log(jsonString);
-    res.json(jsonString);
+        // Set headers for streaming
+        res.setHeader('Content-Type', 'application/json');
+        res.setHeader('Transfer-Encoding', 'chunked');
+
+        // Create a transform stream that handles bigint conversion
+        const transformStream = JSONStream.stringify();
+
+        // Pipe the transform stream to the response
+        transformStream.pipe(res);
+
+        const replacer = (key, value) => {
+            if (typeof value === 'bigint') {
+                return value.toString();
+            }
+            return value;
+        };
+
+        // Process each item and stream it
+        for (const item of resp) {
+            // Convert bigint to string for each item
+            const serializableItem = JSON.parse(JSON.stringify(item, (key, value) => {
+                return typeof value === 'bigint' ? value.toString() : value;
+            }));
+
+            transformStream.write(serializableItem);
+        }
+
+        // End the stream
+        transformStream.end();
+    } catch (error) {
+        console.error('Error:', error);
+        if (!res.headersSent) {
+            res.status(500).json({ error: 'Internal server error' });
+        }
+    }
 });
 
 //recupera o score do user ligado a um contrato do usuario
@@ -218,8 +270,7 @@ app.post('/get/score', async (req, res) => {
     };
 
     const jsonString = JSON.stringify(resp, replacer);
-    console.log(jsonString);
-    res.json(jsonString);
+    res.send(jsonString);
 });
 
 
@@ -236,8 +287,7 @@ app.post('/get/coin', async (req, res) => {
     };
 
     const jsonString = JSON.stringify(resp, replacer);
-    console.log(jsonString);
-    res.json(jsonString);
+    res.send(jsonString);
 
 });
 
@@ -245,7 +295,8 @@ app.post('/get/coin', async (req, res) => {
 
 app.post('/send/data/vehicle', async (req, res) => {
     const Record = mongoose.model('Record', RecordSchema);
- 
+
+
     try {
         const record = new Record(req.body);
         const hash = await record.save();
@@ -254,7 +305,7 @@ app.post('/send/data/vehicle', async (req, res) => {
         owners = await get_constract();
         main_contract = owners[owners.length - 1];
         await monetiza.insert_path(hash, record, main_contract.add, "0x4288201baC903F84648E81A07F793C9E7d893692");
-        res.status(201).json({ mensagem: "dados veiculares inseridos" });
+        res.status(201).json({ "mensagem": "dados veiculares inseridos" });
     } catch (err) {
         console.log(err.message);
         res.status(400).json({ error: err.message });
@@ -262,8 +313,21 @@ app.post('/send/data/vehicle', async (req, res) => {
 
 });
 
+app.post('/send/data/market', async (req, res) => {
+
+    try {
+
+        
+
+
+    } catch (err) {
+        console.log(err.message);
+    }
+});
+
 
 app.post('/receive', (req, res) => {
+    //console.log(req.body);
     web3_eth_tx.main(req.body);
     res.send('Solicitação POST recebida com sucesso!');
 });

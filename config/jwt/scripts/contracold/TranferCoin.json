@@ -49,15 +49,15 @@
     },
     "deployedBytecode": {
       "functionDebugData": {
-        "@getgainvalue_1270": {
+        "@getgainvalue_1349": {
           "entryPoint": 116,
-          "id": 1270,
+          "id": 1349,
           "parameterSlots": 0,
           "returnSlots": 1
         },
-        "@sendEther_1262": {
+        "@sendEther_1341": {
           "entryPoint": 125,
-          "id": 1262,
+          "id": 1341,
           "parameterSlots": 2,
           "returnSlots": 0
         },
@@ -5026,7 +5026,7 @@
   "storageLayout": {
     "storage": [
       {
-        "astId": 1239,
+        "astId": 1318,
         "contract": "tranfer.sol:TranferCoin",
         "label": "gainvalue",
         "offset": 0,

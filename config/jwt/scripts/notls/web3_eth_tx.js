@@ -9,7 +9,7 @@ const host = besu.rpcnode.url;
 async function main(ac) {
 
 
-  console.log(ac)
+  console.log(ac.acc)
 
   const web3 = new Web3(host);
   //pre seeded account - test account only
@@ -20,7 +20,7 @@ async function main(ac) {
   console.log(accountA.address);
 
 
-  var accountBBalance = web3.utils.fromWei(await web3.eth.getBalance(ac));
+  var accountBBalance = web3.utils.fromWei(await web3.eth.getBalance(ac.acc));
   console.log("Account B has balance of: " + accountBBalance);
 
 
@@ -30,7 +30,7 @@ async function main(ac) {
   const txn = {
     nonce: web3.utils.numberToHex(await web3.eth.getTransactionCount(accountA.address)),
     from: accountA.address,
-    to: ac,
+    to: ac.acc,
     value: "0xde0b6b3a7640000",  //amount of eth to transfer
     gasPrice: "0x0", //ETH per unit of gas
     gasLimit: "0x24A22" //max number of gas units the tx is allowed to use
@@ -45,7 +45,7 @@ async function main(ac) {
   //After the transaction there should be some ETH transferred
   accountABalance = web3.utils.fromWei(await web3.eth.getBalance(accountA.address));
   console.log("Account A has an updated balance of: " + accountABalance);
-  accountBBalance = web3.utils.fromWei(await web3.eth.getBalance(ac));
+  accountBBalance = web3.utils.fromWei(await web3.eth.getBalance(ac.acc));
   console.log("Account B has an updated balance of: " + accountBBalance);
 
 }

@@ -5,6 +5,7 @@ pragma solidity ^0.8.10;
 
      // Estruturas de dados
     struct  Event {
+        uint idEvent; // Timestamp de inicio
         address contractAddress;
         string vin; // identificador único do veículo
         string t; // Timestamp de inicio
@@ -12,7 +13,6 @@ pragma solidity ^0.8.10;
         uint fuel_e; // volumes de combustível depois
         uint abastecimento; //litros
         uint usertank;  //litros
-
     }
 
     struct Trajetodata{
@@ -207,7 +207,8 @@ contract Monetiza {
         address wallet,
         address contractAddress,
         uint idEvent,
-        Trajetodata[] listtrajetos
+        Trajetodata[] listtrajetos,
+        uint value
     );
 
 
@@ -264,8 +265,7 @@ contract Monetiza {
     ) public {
         // Create and store the new event
         if(st==false){
-            events = Event(contractAddress,vin, t, fuel_b, 0, abastecimento, usertank);
-            emit EventRegistered(idEvent,wallet,contractAddress,vin, t, fuel_b, 0, abastecimento, usertank);
+            events = Event(idEvent,contractAddress,vin, t, fuel_b, 0, abastecimento, usertank);
             varTrajetos.idEvent = idEvent;
             varTrajetos.contractAddress = contractAddress;
             st = true;
@@ -295,70 +295,93 @@ contract Monetiza {
     }
 
     function closeEvent(address wallet, address contractAddress) public {
-        
-        if(st){
-            st = false;
-           
-            uint compltotal = 0;
-            uint timelesstotal = 0;
+        require(st, "Event already closed");
 
-            if (varTrajetos.listtrajetos.length > 0) {
-                emit TrajetosRegistered(wallet,contractAddress, idEvent, varTrajetos.listtrajetos);
-                for (uint i = 0; i < varTrajetos.listtrajetos.length; i++) {
-                    compltotal += varTrajetos.listtrajetos[i].fuel;
-                    timelesstotal += varTrajetos.listtrajetos[i].timeless;
-                }
+        st = false;
 
-                // completude
-                if (compltotal > 0) {
-                    require(events.fuel_b >= compltotal, "Overflow: compltotal maior que fuel_b");
-                    events.fuel_e = events.fuel_b - compltotal;
+        uint compltotal = 0;
+        uint timelesstotal = 0;
 
-                    require(events.fuel_b > 0, "Divisao por zero");
-                    completude = (events.fuel_e * 1e18) / events.fuel_b;
+        if (varTrajetos.listtrajetos.length > 0) {
+
+        // ✅ Calculate compltotal & timelesstotal in one loop, with overflow protection
+            for (uint i = 0; i < varTrajetos.listtrajetos.length; i++) {
+                uint fuelVal = varTrajetos.listtrajetos[i].fuel;
+                uint timelessVal = varTrajetos.listtrajetos[i].timeless;
+
+                require(compltotal <= type(uint).max - fuelVal, "Overflow fuel");
+                compltotal += fuelVal;
+
+                require(timelesstotal <= type(uint).max - timelessVal, "Overflow timeless");
+                timelesstotal += timelessVal;
+            }
+
+            // ✅ completude
+            if (compltotal > 0) {
+                require(events.fuel_b >= compltotal, "compltotal > fuel_b");
+                events.fuel_e = events.fuel_b - compltotal;
+
+                require(events.fuel_b > 0, "Divisao por zero");
+                completude = (events.fuel_e * 1e18) / events.fuel_b;
 
                 if (completude > 1e18) {
-                        completude = 1e18;
-                    }
+                    completude = 1e18;
                 }
-
-                // frequencia
-                if (timelesstotal > 0) {
-                    timelesstotal = timelesstotal / varTrajetos.listtrajetos.length;
-                }
-                frequencia = timelesstotal;
-
-                if (frequencia > 1e18) {
-                    frequencia = 1e18;
-                }
-
-                unchecked {
-                     coin++;
-                }
-
-                // confianca (fixando escala)
-                require(m <= 1e18, "m invalido");
-                uint halfSum = (completude + frequencia) / 2;
-                confianca = (confianca * m + halfSum * (1e18 - m)) / 1e18;
-
-                emit userScore(wallet, contractAddress, idEvent, completude, frequencia, confianca);
-
-                delete varTrajetos.listtrajetos;
-            } else {
-                events.fuel_e = events.fuel_b;
-                uint constVal = 1e16;
-                confianca = (confianca * m + ((constVal + constVal) / 2) * (1e18 - m)) / 1e18;
-                emit userScore(wallet, contractAddress, idEvent, constVal, constVal, confianca);
             }
 
-            unchecked {
-                idEvent++;
+            // ✅ frequencia
+            if (timelesstotal > 0) {
+                timelesstotal = timelesstotal / varTrajetos.listtrajetos.length;
+            }
+            frequencia = timelesstotal;
+
+            if (frequencia > 1e18) {
+                frequencia = 1e18;
             }
 
-            
-            emit EventRegistered(idEvent,wallet,contractAddress,events.vin,events.t,events.fuel_b,events.fuel_e,events.abastecimento,events.usertank);
-            varTrajetos.idEvent = idEvent;
+            // ✅ Update coin safely
+            unchecked { coin++; }
+
+            // ✅ confianca calculation
+            require(m <= 1e18, "m invalido");
+            uint halfSum = (completude + frequencia) / 2;
+            require(halfSum <= 1e18, "halfSum overflow");
+           
+            require(confianca <= 1e18, "confianca overflow");
+            confianca = (confianca * m + halfSum * (1e18 - m)) / 1e18;
+
+            // ✅ Emit final results AFTER calculations succeed
+            emit TrajetosRegistered(wallet, contractAddress, idEvent, varTrajetos.listtrajetos, confianca);
+            emit userScore(wallet, contractAddress, idEvent, completude, frequencia, confianca);
+
+            delete varTrajetos.listtrajetos;
+
+        } else {
+        // No trajetos → defaults
+            events.fuel_e = events.fuel_b;
+            uint constVal = 1e16;
+
+              confianca = (confianca * m + ((constVal + constVal) / 2) * (1e18 - m)) / 1e18;
+
+            emit userScore(wallet, contractAddress, idEvent, constVal, constVal, confianca);
         }
+
+            unchecked { idEvent++; }
+
+            emit EventRegistered(
+                idEvent,
+                wallet,
+                contractAddress,
+                events.vin,
+                events.t,
+                events.fuel_b,
+                events.fuel_e,
+                events.abastecimento,
+                events.usertank
+                
+            );
+
+            varTrajetos.idEvent = idEvent;
     }
 
     function createTrajeto(
@@ -383,14 +406,16 @@ contract Monetiza {
         if(st=true){
             if (varTrajetos.listtrajetos.length > 0) {
                 for (uint i = 0; i < varTrajetos.listtrajetos.length; i++) {
+                    require(compltotal <= type(uint).max - varTrajetos.listtrajetos[i].fuel, "Overflow detected");
                     compltotal += varTrajetos.listtrajetos[i].fuel;
                 }
 
-                if (events.abastecimento - compltotal > 0) {
+                if (compltotal +  aux.fuel  < events.abastecimento ) {
                     varTrajetos.listtrajetos.push(aux);
-                
                 }
-                else{
+                else{   
+                    aux.fuel =  events.abastecimento - compltotal;
+                    varTrajetos.listtrajetos.push(aux);
                     closeEvent(wallet,contractAddress); 
                 }
 

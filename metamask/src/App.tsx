@@ -3,7 +3,20 @@ import { useState } from 'react'
 import './App.css'
 import { MetaMaskSDK } from "@metamask/sdk"
 import { ethers } from 'ethers';
+import path from 'path';
+import fs from 'fs';
+import contractJson from './assets/contract/SendEther.json';
+
+
+
 function App() {
+
+
+  const contractAbi = contractJson.abi;
+  const contractBytecode = contractJson.evm.bytecode.object;
+  const host = "http://localhost:8545";
+  var adresscontract = "";
+
   const MMSDK = new MetaMaskSDK({
     dappMetadata: {
       name: "Example JavaScript Dapp",
@@ -15,6 +28,8 @@ function App() {
   // Network configurations
 
   async function connect() {
+
+    console.log("oi")
 
 
     const network = {
@@ -93,16 +108,19 @@ function App() {
 
     }
     console.log(accounts);
-    fetch('http://localhost/jwtserver/receive', {
+    fetch('http://localhost:3000/receive', {
       method: "post",
       headers: {
         "Content-Type": "application/json ; charset=UTF-8"
       },
       body: JSON.stringify(ob)
+
     }).then(response => {
+      console.log(JSON.stringify(ob));
       console.log(response);
     })
       .catch(error => {
+
         console.log(error);
       });
 
@@ -157,15 +175,11 @@ function App() {
 
         const from = accounts[0];
 
-        // Convert ETH amount to wei (hex)
-        // const value = `0x${(amount * 1e18).toString(16)}`;
 
-        // Prepare transaction
         const transaction = {
           from,
           to: recipientAddress,
           value: "0x100",  //amount of eth to transfer
-          gasPrice: "0x0", //ETH per unit of gas
           gasLimit: "0x24A22" //max number of gas units the tx is allowed to use
           // Gas fields are optional - MetaMask will estimate
         };
@@ -175,8 +189,6 @@ function App() {
           method: "eth_sendTransaction",
           params: [transaction],
         });
-
-
         return txHash;
 
       }
@@ -215,6 +227,173 @@ function App() {
 
   }
 
+
+  async function deploy() {
+    const ethereum = MMSDK.getProvider()
+    try {
+      console.log("Contract bytecode size:", contractBytecode.length / 2, "bytes");
+      //console.log(ethereum);
+
+
+      if (ethereum && adresscontract == '') {
+        // Request account access
+        console.log("Requesting MetaMask account access...");
+        const accounts: any = await ethereum.request({ method: 'eth_requestAccounts' });
+
+        // Create provider from MetaMask
+        const provider: any = new ethers.BrowserProvider(ethereum);
+
+        // Get signer from MetaMask
+        const signer = await provider.getSigner();
+        const userAddress = await signer.getAddress();
+
+        console.log("Connected with address:", userAddress);
+
+        // Deploy MonetizaFactory
+        console.log("Deploying MonetizaFactory...");
+
+        const factory = new ethers.ContractFactory(contractAbi, contractBytecode, signer);
+
+        // Get fee data for gas estimation
+        const feeData = await provider.getFeeData();
+
+        // Deploy contract with wallet.address as constructor parameter
+        const contract = await factory.deploy();
+
+        console.log("Transaction hash:", contract.deploymentTransaction()?.hash);
+        console.log("Waiting for deployment confirmation...");
+
+        // Wait for deployment to complete
+        const deployed = await contract.waitForDeployment();
+        console.log("MonetizaFactory deployed at:", deployed.target);
+        adresscontract = await deployed.getAddress();
+        return deployed.target;
+
+      }
+
+    } catch (error) {
+      console.error("Deployment failed:", error);
+      throw error;
+    }
+
+  }
+
+  async function sendViaTransfer() {
+    const ethereum = MMSDK.getProvider()
+    // Create provider from MetaMask
+    if (ethereum && adresscontract != '') {
+      const provider: any = new ethers.BrowserProvider(ethereum);
+
+      // 1. O Signer tem a chave do usuário e a capacidade de assinar transações.
+      const signer = await provider.getSigner();
+      const userAddress = await signer.getAddress();
+
+      console.log("Connected with address:", userAddress);
+
+      // 2. CORREÇÃO CRÍTICA: Use o 'signer' ao invés do 'provider'
+      //    para inicializar o contrato, permitindo enviar transações.
+      const contract = new ethers.Contract(adresscontract, contractAbi, signer);
+      //const recipientAddress = "0xC0F53964CE977EB8e1Ccf0427527B36f7F3Ab9Fd";
+      // 2. Defina o valor a ser enviado (ex: 0.01 Ether, convertido para Wei)
+      const amountToSend = ethers.parseEther("0.01");
+
+      // 3. A função de escrita (transação) é chamada com sucesso.
+      const tx = await contract.sendViaTransfer(
+        "0xC0F53964CE977EB8e1Ccf0427527B36f7F3Ab9Fd",
+        {
+          value: amountToSend,
+          gasLimit: 100000 // Add explicit gas limit
+        }
+
+      );
+
+      // Recomenda-se esperar a confirmação da transação
+      const receipt = await tx.wait();
+
+      console.log("Transação enviada com sucesso. Hash:", tx.hash);
+
+      
+      return tx;
+    }
+
+  }
+
+  async function sendViaSend() {
+     const ethereum = MMSDK.getProvider()
+    // Create provider from MetaMask
+    if (ethereum && adresscontract != '') {
+      const provider: any = new ethers.BrowserProvider(ethereum);
+
+      // 1. O Signer tem a chave do usuário e a capacidade de assinar transações.
+      const signer = await provider.getSigner();
+      const userAddress = await signer.getAddress();
+
+      console.log("Connected with address:", userAddress);
+
+      // 2. CORREÇÃO CRÍTICA: Use o 'signer' ao invés do 'provider'
+      //    para inicializar o contrato, permitindo enviar transações.
+      const contract = new ethers.Contract(adresscontract, contractAbi, signer);
+      //const recipientAddress = "0xC0F53964CE977EB8e1Ccf0427527B36f7F3Ab9Fd";
+      // 2. Defina o valor a ser enviado (ex: 0.01 Ether, convertido para Wei)
+      const amountToSend = ethers.parseEther("0.02");
+
+      // 3. A função de escrita (transação) é chamada com sucesso.
+      const tx = await contract.sendViaSend(
+        "0xC0F53964CE977EB8e1Ccf0427527B36f7F3Ab9Fd",
+        {
+          value: amountToSend,
+          gasLimit: 100000 // Add explicit gas limit
+        }
+
+      );
+
+      // Recomenda-se esperar a confirmação da transação
+      const receipt = await tx.wait();
+
+      console.log("Transação enviada com sucesso. Hash:", tx.hash);
+
+   
+      return tx;
+    }
+
+  }
+
+  async function sendViaCall() {
+     const ethereum = MMSDK.getProvider()
+    // Create provider from MetaMask
+    if (ethereum && adresscontract != '') {
+      const provider: any = new ethers.BrowserProvider(ethereum);
+
+      // 1. O Signer tem a chave do usuário e a capacidade de assinar transações.
+      const signer = await provider.getSigner();
+      const userAddress = await signer.getAddress();
+
+      console.log("Connected with address:", userAddress);
+
+      const contract = new ethers.Contract(adresscontract, contractAbi, signer);
+      
+      const amountToSend = ethers.parseEther("0.03");
+
+      // 3. A função de escrita (transação) é chamada com sucesso.
+      const tx = await contract.sendViaCall(
+        "0xC0F53964CE977EB8e1Ccf0427527B36f7F3Ab9Fd",
+        {
+          value: amountToSend,
+          gasLimit: 100000 // Add explicit gas limit
+        }
+
+      );
+
+      // Recomenda-se esperar a confirmação da transação
+      const receipt = await tx.wait();
+
+      console.log("Transação enviada com sucesso. Hash:", tx.hash);
+
+
+      return tx;
+    }
+
+  }
   return (
     <>
       <h1>Besu</h1>
@@ -246,11 +425,33 @@ function App() {
 
         </div>
         <br />
+        <div>
+          <button onClick={deploy}>
+            Deploy contract
+          </button>
+          <br />
+          <br />
+          <button onClick={sendViaTransfer}>
+            send Via Transfer
+          </button>
+          <br />
+          <br />
+          <button onClick={sendViaSend}>
+            send Via Send
+          </button>
+          <br />
+          <br />
+          <button onClick={sendViaCall}>
+            send Via Call
+          </button>
+
+        </div>
+        <br />
         <br />
 
       </div>
 
-    
+
     </>
   )
 }

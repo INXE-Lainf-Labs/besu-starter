@@ -16,7 +16,7 @@ x-besu-def:
       /opt/besu/bin/besu \
       --config-file=/config/configu.toml \
       --p2p-host=$$(hostname -i) \
-      --rpc-http-api=WEB3,ETH,NET,TRACE,DEBUG,ADMIN,TXPOOL,PERM,${BESU_CONS_ALGO:-QBFT} \
+      --rpc-http-api=EEA,WEB3,ETH,NET,TRACE,DEBUG,ADMIN,TXPOOL,PERM,${BESU_CONS_ALGO:-QBFT} \
 
 x-ethsignerProxy-def:
   &ethsignerProxy-def
@@ -148,7 +148,7 @@ services:
         /opt/besu/bin/besu \
         --config-file=/config/config.toml \
         --p2p-host=$$(hostname -i) \
-        --rpc-http-api=WEB3,ETH,NET,TRACE,DEBUG,ADMIN,TXPOOL,PERM,${BESU_CONS_ALGO:-QBFT} \
+        --rpc-http-api=EEA,WEB3,ETH,NET,TRACE,DEBUG,ADMIN,TXPOOL,PERM,${BESU_CONS_ALGO:-QBFT} \
         --rpc-http-authentication-jwt-public-key-file=/config/publicRSAKey.pem \
      
     environment:
@@ -182,7 +182,7 @@ services:
       - |
         cp "/config/${BESU_CONS_ALGO:-QBFT}genesis.json" /config/genesis.json
         /opt/besu/bin/besu \
-        --config-file=/config/configu.toml \
+        --config-file=/config/config.toml \
         --p2p-host=$$(hostname -i) \
         --rpc-http-api=WEB3,ETH,NET,TRACE,DEBUG,ADMIN,TXPOOL,PERM,${BESU_CONS_ALGO:-QBFT} \
     environment:

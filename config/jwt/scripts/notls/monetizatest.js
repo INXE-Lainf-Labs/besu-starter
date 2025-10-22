@@ -56,26 +56,45 @@ async function getOpenEventStatus(mastercontract, id) {
   return (await writableContract.checkStatus(id));
 }
 
-
 async function existContract(mastercontract, wallet_user) {
   const provider = new ethers.JsonRpcProvider(host);
   const wallet = new ethers.Wallet(accountPrivateKey, provider);
-
-
   const readOnlyContract = new ethers.Contract(mastercontract, contractAbi, provider);
   const writableContract = readOnlyContract.connect(wallet);
   // Get events from block 0 to latest
-  const contracts = await writableContract.queryFilter("ContractCreated", 0, "latest");
 
-  a = false
 
-  for (const contract of contracts) {
-    if (contract.args.owner == wallet_user) {
-      a = true;
+  const latestBlock = await provider.getBlockNumber();
+  const step = 5000; // chunk size
+  let fromBlock = 0;
+  let toBlock = step;
+
+
+  while (fromBlock <= latestBlock) {
+
+
+    if (toBlock > latestBlock) {
+      toBlock = latestBlock;
     }
+    const contracts = await writableContract.queryFilter("ContractCreated", fromBlock, toBlock);
+
+    for (const contract of contracts) {
+      if (contract.args.owner == wallet_user) {
+        return true;
+      }
+    }
+
+    // Move to the next block range
+    fromBlock = toBlock + 1;
+    toBlock = fromBlock + step;
+
+
+
   }
 
-  return a;
+  return false;
+
+
 
 }
 
@@ -89,15 +108,38 @@ async function getUserContract(mastercontract, wallet_user) {
   const readOnlyContract = new ethers.Contract(mastercontract, contractAbi, provider);
   const writableContract = readOnlyContract.connect(wallet);
   // Get events from block 0 to latest
-  const contracts = await writableContract.queryFilter("ContractCreated", 0, "latest");
 
 
 
-  for (const contract of contracts) {
-    if (contract.args.owner == wallet_user) {
-      return contract;
+  const latestBlock = await provider.getBlockNumber();
+  const step = 5000; // chunk size
+  let fromBlock = 0;
+  let toBlock = step;
+
+
+  while (fromBlock <= latestBlock) {
+
+
+    if (toBlock > latestBlock) {
+      toBlock = latestBlock;
     }
+    const contracts = await writableContract.queryFilter("ContractCreated", fromBlock, toBlock);
+
+    for (const contract of contracts) {
+      if (contract.args.owner == wallet_user) {
+        return contract;
+      }
+    }
+
+    // Move to the next block range
+    fromBlock = toBlock + 1;
+    toBlock = fromBlock + step;
+
+
+
   }
+
+  return false;
 
 
 }
@@ -121,17 +163,45 @@ async function getEventOpen(mastercontract, wallet_user) {
 
 
     if (await getOpenEventStatus(mastercontract, help.args.id) == true) {
-      console.log(await writableContract.getEvents(help.args.id));
-      return await writableContract.getEvents(help.args.id);
+
+
+      const raw = await writableContract.getEvents(help.args.id);
+      const [
+        idEvent,
+        contractAddress,
+        vin,
+        date,
+        fuel_b,
+        fuel_e,
+        abastecimento,
+        usertank
+      ] = raw;
+
+
+
+      // Format BigInt values into decimal strings:
+      const decimals = 18;
+      const formatted = {
+        idEvent,
+        contractAddress,
+        vin,
+        date,
+        fuel_b: parseFloat(ethers.formatUnits(fuel_b, decimals)).toFixed(2),
+        fuel_e: parseFloat(ethers.formatUnits(fuel_e, decimals)).toFixed(2),
+        abastecimento: parseFloat(ethers.formatUnits(abastecimento, decimals)).toFixed(2),
+        usertank: parseFloat(ethers.formatUnits(usertank, decimals)).toFixed(2),
+      };
+
+      return formatted
     } else {
       console.log("Não existe evento aberto");
-      return false
+      return ""
     }
 
 
   } else {
     console.log("contrato não existente");
-    return false
+    return ""
   }
 }
 
@@ -151,30 +221,50 @@ async function getEventClose(mastercontract, wallet_user) {
 
   const monetizaContract = new ethers.Contract(helpadd.args[1], contractAbi2, provider);
 
-  const logs = await monetizaContract.queryFilter("EventRegistered", 0, "latest");
 
-  //console.log(logs);
 
+  const latestBlock = await provider.getBlockNumber();
+  const step = 5000; // chunk size
+  let fromBlock = 0;
+  let toBlock = step;
   aux = [];
-  for (const log of logs) {
 
-    if (log.args.wallet == wallet_user) {
-      helpaux = {
-        idevent: log.args.idEvent,
-        wallet: log.args.wallet,
-        contractAddress: log.args.contractAddress,
-        vin: log.args.vin,
-        t: log.args.t,
-        fuel_b: log.args.fuel_b,
-        fuel_e: log.args.fuel_e,
-        abastecimento: log.args.abastecimento,
-        usertank: log.args.usertank,
-      };
-      aux.push(helpaux)
-      console.log(helpaux)
 
+  while (fromBlock <= latestBlock) {
+
+
+    if (toBlock > latestBlock) {
+      toBlock = latestBlock;
     }
+    const logs = await monetizaContract.queryFilter("EventRegistered", fromBlock, toBlock);
+
+    for (const log of logs) {
+
+
+      if (log.args.wallet == wallet_user) {
+        const decimals = 18;
+        helpaux = {
+          idEvent: log.args.idEvent,
+          wallet: log.args.wallet,
+          contractAddress: log.args.contractAddress,
+          vin: log.args.vin,
+          date: log.args.t,
+          fuel_b: parseFloat(ethers.formatUnits(log.args.fuel_b, decimals)).toFixed(2),
+          fuel_e: parseFloat(ethers.formatUnits(log.args.fuel_e, decimals)).toFixed(2),
+          abastecimento: parseFloat(ethers.formatUnits(log.args.abastecimento, decimals)).toFixed(2),
+          usertank: parseFloat(ethers.formatUnits(log.args.usertank, decimals)).toFixed(2),
+        };
+        aux.push(helpaux)
+        console.log(helpaux)
+
+      }
+    }
+
+    // Move to the next block range
+    fromBlock = toBlock + 1;
+    toBlock = fromBlock + step;
   }
+
 
   return aux;
 
@@ -196,13 +286,40 @@ async function getPathEventOpen(mastercontract, wallet_user) {
 
 
     if (await getOpenEventStatus(mastercontract, help.args.id) == true) {
-      return await writableContract.getpath(help.args.id);
+
+
+      const raw = await writableContract.getpath(help.args.id);
+      const decimals = 18;
+
+      // Extract struct fields
+      const { contractAddress, listtrajetos, idEvent } = raw;
+
+
+      // Format the trajetos array
+      const trajetosFormatted = listtrajetos.map((trajeto) => {
+        return {
+          storedHash: trajeto.storedHash,
+          dist: parseFloat(ethers.formatUnits(trajeto.dist, decimals)).toFixed(2),
+          fuel: parseFloat(ethers.formatUnits(trajeto.fuel, decimals)).toFixed(2),
+          time: parseFloat(ethers.formatUnits(trajeto.time, decimals)).toFixed(2),
+          timeless: parseFloat(ethers.formatUnits(trajeto.timeless, decimals)).toFixed(2),
+        };
+      });
+
+      const formatted = {
+        contractAddress,
+        idEvent: idEvent.toString(), // convert BigInt if needed
+        listtrajetos: trajetosFormatted,
+      };
+
+
+      return formatted;
     } else {
-      return "Não existe evento aberto";
+      return "";
     }
 
   } else {
-    console.log("contrato não existente");
+    return "";
   }
 
 }
@@ -220,17 +337,57 @@ async function getPathEventClose(mastercontract, wallet_user) {
 
   const monetizaContract = new ethers.Contract(helpadd.args[1], contractAbi2, provider);
 
-  const logs = await monetizaContract.queryFilter("TrajetosRegistered", 0, "latest");
 
+  const latestBlock = await provider.getBlockNumber();
+  const step = 5000; // chunk size
+  let fromBlock = 0;
+  let toBlock = step;
   aux = [];
-  for (const log of logs) {
 
-    if (log.args.wallet == wallet_user) {
-      aux.push(log)
 
+  while (fromBlock <= latestBlock) {
+
+
+    if (toBlock > latestBlock) {
+      toBlock = latestBlock;
     }
-  }
+    const logs = await monetizaContract.queryFilter("TrajetosRegistered", fromBlock, toBlock);
 
+    for (const log of logs) {
+      if (log.args.wallet == wallet_user) {
+
+        const decimals = 18;
+
+
+
+        // Format the trajetos array
+        const trajethelpauxosFormatted = log.args.listtrajetos.map((trajeto) => {
+          return {
+            storedHash: trajeto.storedHash,
+            dist: parseFloat(ethers.formatUnits(trajeto.dist, decimals)).toFixed(2),
+            fuel: parseFloat(ethers.formatUnits(trajeto.fuel, decimals)).toFixed(2),
+            time: parseFloat(ethers.formatUnits(trajeto.time, decimals)).toFixed(2),
+            timeless: parseFloat(ethers.formatUnits(trajeto.timeless, decimals)).toFixed(2),
+
+          };
+        });
+
+        const formatted = {
+          wallet: log.args.wallet,
+          contractAddress: log.args.contractAddress,
+          idevent: log.args.idEvent,
+          listtrajetos: trajethelpauxosFormatted,
+          value: parseFloat(ethers.formatUnits(log.args.value, decimals)).toFixed(2),
+        };
+        aux.push(formatted)
+
+      }
+    }
+
+    // Move to the next block range
+    fromBlock = toBlock + 1;
+    toBlock = fromBlock + step;
+  }
   return aux;
 }
 
@@ -327,7 +484,15 @@ async function getuserscore(mastercontract, wallet_user) {
 
   if (exist) {
     help = await getUserContract(mastercontract, wallet_user);
-    return await writableContract.getscore(help.args.id);
+
+    help1 = await writableContract.getscore(help.args.id);
+    const decimals = 18; // depende do token
+    help2 = []
+    help2[0] = parseFloat(ethers.formatUnits(help1[0].toString(), decimals)).toFixed(2);
+    help2[1] = parseFloat(ethers.formatUnits(help1[1].toString(), decimals)).toFixed(2);
+    help2[2] = parseFloat(ethers.formatUnits(help1[2].toString(), decimals)).toFixed(2);
+    console.log(help2)
+    return help2
   } else {
     console.log("contrato não existente");
     return false;
@@ -424,143 +589,157 @@ async function insert_path(hash, tuple, mastercontract, wallet_user) {
 
     if (await getOpenEventStatus(mastercontract, help.args.id) == true) {
 
+      eventuser = await getEventOpen(mastercontract, wallet_user)
+      const data = eventuser;
       listPoints = []
       listFuel = []
       listTime = []
 
       a = tuple.data;
+      if (tuple.data[0].vin == data.vin) {
 
 
-      for (i = 0; i < a.length; i++) {
-
-
-
-        if (parseFloat(tuple.data[i].userdata.pos.lat) != 0.0 && parseFloat(tuple.data[i].userdata.pos.long) != 0.0) {
-          point = {
-            lat: tuple.data[i].userdata.pos.lat,
-            lng: tuple.data[i].userdata.pos.long
-          }
-
-          listPoints.push(point)
-        }
+        for (i = 0; i < a.length; i++) {
 
 
 
-        listTime.push(tuple.data[i].userdata.time)
+          if (parseFloat(tuple.data[i].userdata.pos.lat) != 0.0 && parseFloat(tuple.data[i].userdata.pos.long) != 0.0) {
+            point = {
+              lat: tuple.data[i].userdata.pos.lat,
+              lng: tuple.data[i].userdata.pos.long
+            }
 
-        for (j = 0; j < tuple.data[i].userdata.userdata.length; j++) {
-
-          if (tuple.data[i].userdata.userdata[j].pid = "01 2F") {
-
-            listFuel.push(parseFloat(tuple.data[i].userdata.userdata[j].obddata.response))
-
+            listPoints.push(point)
           }
 
 
-        }
 
-      }
+          listTime.push(tuple.data[i].userdata.time)
+
+          for (j = 0; j < tuple.data[i].userdata.userdata.length; j++) {
+
+            if (tuple.data[i].userdata.userdata[j].pid = "01 2F") {
+
+              listFuel.push(parseFloat(tuple.data[i].userdata.userdata[j].obddata.response))
+
+            }
 
 
-      listtModify = [0]
-
-      helpsum = 0
-
-      for (i = 0; i < listTime.length; i++) {
-
-        if (i + 1 < listTime.length) {
-
-          //TIME INIT  
-          const date1 = new Date(listTime[i]); // First date and time
-          const date2 = new Date(listTime[i + 1]); // Second date and time
-
-          // Calculate the difference in milliseconds
-          const diffMilliseconds = date2.getTime() - date1.getTime();
-
-          // Convert milliseconds to hours
-          const diffHours = diffMilliseconds / (1000);
-
-          helpsum = helpsum + diffHours
-
-          listtModify.push(helpsum)
-          //TIME CLOSE  
-
+          }
 
         }
 
-      }
 
-      timeli = await Timeliness(listtModify, 3);
+        listtModify = [0]
 
+        helpsum = 0
 
-      //fingindo que adicionei o ruido
-      newlistFuel = []
+        for (i = 0; i < listTime.length; i++) {
 
-      const regression = new rl.SimpleLinearRegression(listtModify, listFuel);
+          if (i + 1 < listTime.length) {
 
+            //TIME INIT  
+            const date1 = new Date(listTime[i]); // First date and time
+            const date2 = new Date(listTime[i + 1]); // Second date and time
 
-      const json = regression.toJSON();
-      const loaded = rl.SimpleLinearRegression.load(json);
-      for (i = 0; i < listFuel.length; i++) {
+            // Calculate the difference in milliseconds
+            const diffMilliseconds = date2.getTime() - date1.getTime();
 
-        newlistFuel.push(loaded.predict(listtModify[i]));
-      }
-      //console.log(newlistFuel)
+            // Convert milliseconds to hours
+            const diffHours = diffMilliseconds / (1000);
 
+            helpsum = helpsum + diffHours
 
-
-      fuel = newlistFuel[0] - newlistFuel[newlistFuel.length - 1]
-
-
-
-      timef = listtModify[listtModify.length - 1];
-
-      //console.log(timef);
+            listtModify.push(helpsum)
+            //TIME CLOSE  
 
 
-      hashgenerate = ethers.encodeBytes32String(hash._id.toString());
-
-
-      distmeters = 0;
-
-      for (i = 0; i < listPoints.length; i++) {
-
-
-        if (i < listPoints.length - 1) {
-
-
-          distmeters = haversine(listPoints[i], listPoints[i + 1]);
+          }
 
         }
 
+        timeli = await Timeliness(listtModify, 3);
+
+
+        //fingindo que adicionei o ruido
+        newlistFuel = []
+
+        const regression = new rl.SimpleLinearRegression(listtModify, listFuel);
+
+
+        const json = regression.toJSON();
+        const loaded = rl.SimpleLinearRegression.load(json);
+        for (i = 0; i < listFuel.length; i++) {
+
+          newlistFuel.push(loaded.predict(listtModify[i]));
+        }
+        //console.log(newlistFuel)
+
+
+
+        fuel = newlistFuel[0] - newlistFuel[newlistFuel.length - 1]
+
+
+
+        timef = listtModify[listtModify.length - 1];
+
+        //console.log(timef);
+
+
+        hashgenerate = ethers.encodeBytes32String(hash._id.toString());
+
+
+        distmeters = 0;
+
+        for (i = 0; i < listPoints.length; i++) {
+
+
+          if (i < listPoints.length - 1) {
+
+
+            distmeters = haversine(listPoints[i], listPoints[i + 1]);
+
+          }
+
+        }
+
+
+        const provider = new ethers.JsonRpcProvider(host);
+        const wallet = new ethers.Wallet(accountPrivateKey, provider);
+        // Create a new Monetiza contract
+        const readOnlyContract = new ethers.Contract(mastercontract, contractAbi, provider);
+        const writableContract = readOnlyContract.connect(wallet);
+
+
+        console.log(fuel);
+
+        fuel = (fuel / 100) * 40;
+
+
+        console.log(fuel);
+
+
+        const decimals = 18; // depende do token
+        const dm = ethers.parseUnits(distmeters.toString(), decimals);
+        const f = ethers.parseUnits(fuel.toString(), decimals);
+        const ts = ethers.parseUnits(timef.toString(), decimals);
+        const tl = ethers.parseUnits(timeli.toString(), decimals);
+
+        console.log(f);
+
+
+        const txNew = await writableContract.createTrajeto(help.args.id, wallet_user, help.args.contractAddress, hashgenerate, dm, f, ts, tl);
+
+        const receipt = await txNew.wait();
+        console.log(receipt);
+      } else {
+        console.log("vin diferente")
       }
-
-
-      const provider = new ethers.JsonRpcProvider(host);
-      const wallet = new ethers.Wallet(accountPrivateKey, provider);
-      // Create a new Monetiza contract
-      const readOnlyContract = new ethers.Contract(mastercontract, contractAbi, provider);
-      const writableContract = readOnlyContract.connect(wallet);
-
-      fuel = (fuel / 100) * 40;
-
-
-      fuel = 1;
-
-      const decimals = 18; // depende do token
-      const dm = ethers.parseUnits(distmeters.toString(), decimals);
-      const f = ethers.parseUnits(fuel.toString(), decimals);
-      const ts = ethers.parseUnits(timef.toString(), decimals);
-      const tl = ethers.parseUnits(timeli.toString(), decimals);
-
-      const txNew = await writableContract.createTrajeto(help.args.id, wallet_user, help.args.contractAddress, hashgenerate, dm, f, ts, tl);
-
-      const receipt = await txNew.wait();
-      console.log(receipt);
 
     } else {
       console.log("Não existe evento em aberto")
     }
+
 
 
   } else {
@@ -613,6 +792,7 @@ module.exports = {
 };
 
 
+
 //node scripts/compile.js 
 //curl -X POST http://localhost:3000/create/contract
 //curl -X POST http://localhost:3000/get/contract
@@ -622,11 +802,12 @@ module.exports = {
 //curl -X POST http://localhost:3000/get/event/open
 //curl -X POST http://localhost:3000/create/event
 //curl -X POST http://localhost:3000/get/event/open
+//./test.sh
 //curl -X POST http://localhost:3000/get/event/close
 //curl -X POST http://localhost:3000/get/path/open
 //curl -X POST http://localhost:3000/get/path/close
 //curl -X POST http://localhost:3000/get/score
 //curl -X POST http://localhost:3000/get/coin
-//./test
+
 
 //1000000000000000000n > 523069529879478500n

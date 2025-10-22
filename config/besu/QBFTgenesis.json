@@ -12,8 +12,8 @@
     "muirGlacierBlock": 0,
     "berlinBlock": 0,
     "londonBlock": 0,
+    "parisBlock": 0,
     "arrowGlacierBlock": 0,
-
     "grayGlacierBlock": 0,
     "zeroBaseFee": true,
     "qbft": {
@@ -95,3 +95,4 @@
     }
   }
 }
+
