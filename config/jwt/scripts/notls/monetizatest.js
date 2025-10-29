@@ -56,6 +56,43 @@ async function getOpenEventStatus(mastercontract, id) {
   return (await writableContract.checkStatus(id));
 }
 
+async function getusers(mastercontract) {
+
+  const provider = new ethers.JsonRpcProvider(host);
+  const wallet = new ethers.Wallet(accountPrivateKey, provider);
+  const readOnlyContract = new ethers.Contract(mastercontract, contractAbi, provider);
+  const writableContract = readOnlyContract.connect(wallet);
+  // Get events from block 0 to latest
+
+  const latestBlock = await provider.getBlockNumber();
+  const step = 5000; // chunk size
+  let fromBlock = 0;
+  let toBlock = step;
+
+  listuser = []
+
+  while (fromBlock <= latestBlock) {
+
+
+    if (toBlock > latestBlock) {
+      toBlock = latestBlock;
+    }
+    const contracts = await writableContract.queryFilter("ContractCreated", fromBlock, toBlock);
+
+    for (const contract of contracts) {
+      listuser.push(contract.args.owner)
+      
+    }
+
+    // Move to the next block range
+    fromBlock = toBlock + 1;
+    toBlock = fromBlock + step;
+  }
+
+  return listuser;
+
+}
+
 async function existContract(mastercontract, wallet_user) {
   const provider = new ethers.JsonRpcProvider(host);
   const wallet = new ethers.Wallet(accountPrivateKey, provider);
@@ -68,6 +105,13 @@ async function existContract(mastercontract, wallet_user) {
   const step = 5000; // chunk size
   let fromBlock = 0;
   let toBlock = step;
+
+  userlist = []
+
+  const user = {
+    wallet: "",
+    addcontract: "",
+  }
 
 
   while (fromBlock <= latestBlock) {
@@ -87,14 +131,9 @@ async function existContract(mastercontract, wallet_user) {
     // Move to the next block range
     fromBlock = toBlock + 1;
     toBlock = fromBlock + step;
-
-
-
   }
 
   return false;
-
-
 
 }
 
@@ -454,7 +493,7 @@ async function closeUserEvent(mastercontract, wallet_user) {
 
       const txNew = await writableContract.closeevent(help.args.id, wallet_user, help.args.contractAddress);
       const receipt = await txNew.wait();
-      console.log(receipt);
+      //console.log(receipt);
       console.log("Evento fechado")
       return true;
     } else {
@@ -517,11 +556,31 @@ async function getcoin(mastercontract, wallet_user) {
     help = await getUserContract(mastercontract, wallet_user);
 
     const value = await writableContract.getcoin(help.args.id);
-    const txNew = await writableContract.setcoin(help.args.id);
-    const receipt = await txNew.wait();
-    console.log(receipt);
-    return value;
 
+
+    const decimals = 18; // depende do token
+    const valuecon = parseFloat(ethers.formatUnits(value, decimals)).toFixed(2);
+    console.log(valuecon)
+
+    if (valuecon > 0) {
+
+      const pay = await writableContract.sendViaCall(wallet_user,
+        {
+          value: value,
+          gasLimit: 100000 // Add explicit gas limit
+        });
+
+      var receipt = await pay.wait();
+      //console.log(receipt)
+
+
+      const txNew = await writableContract.setcoin(help.args.id);
+      receipt = await txNew.wait();
+      console.log(receipt);
+
+      return value;
+    }
+    return 0;
 
   } else {
     console.log("contrato não existente");
@@ -770,6 +829,7 @@ if (require.main === module) {
   getEventOpen();
   getEventClose();
   getuserscore();
+  getusers();
 }
 
 // Export both functions
@@ -788,7 +848,8 @@ module.exports = {
   getEventOpen,
   getcoin,
   getEventClose,
-  getuserscore
+  getuserscore,
+  getusers
 };
 
 
