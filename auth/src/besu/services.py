@@ -209,24 +209,27 @@ async def broadcast_signed_transaction(
         # Enviar transação assinada para a rede
         try:
             tx_hash = await w3.eth.send_raw_transaction(signed_transaction)
-        except ValueError as e:
+        except (ValueError, Exception) as e:
             # Erros comuns: nonce incorreto, gas insuficiente, etc.
             error_msg = str(e)
-            if "nonce" in error_msg.lower():
-                return SignedTransactionResponse(
-                    success=False,
-                    error_message=f"Erro de nonce: {error_msg}. Verifique se o nonce está correto."
-                )
-            elif "gas" in error_msg.lower():
+            
+            # Tratar erros específicos de gas
+            if "gas" in error_msg.lower():
                 return SignedTransactionResponse(
                     success=False,
                     error_message=f"Erro de gas: {error_msg}. Verifique o gas_limit."
                 )
-            elif "balance" in error_msg.lower() or "funds" in error_msg.lower():
+            elif "nonce" in error_msg.lower():
                 return SignedTransactionResponse(
                     success=False,
-                    error_message=f"Saldo insuficiente: {error_msg}"
+                    error_message=f"Erro de nonce: {error_msg}. Verifique se o nonce está correto."
                 )
+            # não necessário 
+            # elif "balance" in error_msg.lower() or "funds" in error_msg.lower():
+            #     return SignedTransactionResponse(
+            #         success=False,
+            #         error_message=f"Saldo insuficiente: {error_msg}"
+            #     )
             else:
                 return SignedTransactionResponse(
                     success=False,
@@ -240,7 +243,7 @@ async def broadcast_signed_transaction(
             return SignedTransactionResponse(
                 success=False,
                 transaction_hash=tx_hash.hex(),
-                error_message=f"Transação enviada mas timeout ao aguardar confirmação: {str(e)}"
+                error_message=f"Transação enviada mas ocorreu timeout ao aguardar confirmação: {str(e)}"
             )
         
         # Verificar se a transação foi bem-sucedida
@@ -281,7 +284,7 @@ async def broadcast_signed_transaction(
     except Exception as e:
         return SignedTransactionResponse(
             success=False,
-            error_message=f"Erro interno ao fazer broadcast: {str(e)}"
+            error_message=f"Erro interno durante deploy: {str(e)}"
         )
 
 
