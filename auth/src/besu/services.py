@@ -87,9 +87,6 @@ async def compile_solidity_contract(contract_file: UploadFile) -> ContractCompil
             # Configurar remappings para bibliotecas Solidity (formato correto para py-solc-x)
             import_remappings = [
                 '@openzeppelin/contracts=/usr/local/lib/node_modules/@openzeppelin/contracts',
-                # Adicione mais bibliotecas aqui conforme necessário:
-                # '@chainlink/contracts=/usr/local/lib/node_modules/@chainlink/contracts',
-                # '@uniswap/v3-core=/usr/local/lib/node_modules/@uniswap/v3-core',
             ]
             
             # Tentar compilar com remappings
@@ -224,12 +221,6 @@ async def broadcast_signed_transaction(
                     success=False,
                     error_message=f"Erro de nonce: {error_msg}. Verifique se o nonce está correto."
                 )
-            # não necessário 
-            # elif "balance" in error_msg.lower() or "funds" in error_msg.lower():
-            #     return SignedTransactionResponse(
-            #         success=False,
-            #         error_message=f"Saldo insuficiente: {error_msg}"
-            #     )
             else:
                 return SignedTransactionResponse(
                     success=False,
