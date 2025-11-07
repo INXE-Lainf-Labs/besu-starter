@@ -160,21 +160,7 @@ async def broadcast_signed_transaction(
     w3: AsyncWeb3,
     signed_transaction: str
 ) -> SignedTransactionResponse:
-    """
-    Faz broadcast de uma transação já assinada localmente pelo cliente.
-    
-    Esta é a forma SEGURA de fazer deploy, pois:
-    - A chave privada NUNCA trafega na rede
-    - A assinatura é feita localmente pelo cliente
-    - O servidor apenas faz broadcast da transação
-    
-    Args:
-        w3: Cliente Web3 conectado ao Besu
-        signed_transaction: Raw transaction assinada em hexadecimal
-        
-    Returns:
-        SignedTransactionResponse com endereço do contrato e hash da transação
-    """
+
     try:
         # Verificar conexão
         if not await w3.is_connected():

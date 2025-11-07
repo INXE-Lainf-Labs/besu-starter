@@ -1,10 +1,9 @@
 {
 	"info": {
-		"_postman_id": "106d13d5-5268-4cf7-95c4-2025b6e9853b",
+		"_postman_id": "0ad991ca-e580-4ced-9fee-bd719851bd61",
 		"name": "Besu Starter",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-		"_exporter_id": "45227770",
-		"_collection_link": "https://paulo-6186385.postman.co/workspace/Paulo's-Workspace~b0095b2f-66a5-4361-800e-15397e1fffa9/collection/45227770-106d13d5-5268-4cf7-95c4-2025b6e9853b?action=share&source=collection_link&creator=45227770"
+		"_exporter_id": "28464677"
 	},
 	"item": [
 		{
@@ -85,7 +84,7 @@
 							},
 							"status": "Created",
 							"code": 201,
-							"_postman_previewlanguage": null,
+							"_postman_previewlanguage": "Text",
 							"header": [
 								{
 									"key": "Server",
@@ -169,7 +168,7 @@
 							},
 							"status": "Bad Request",
 							"code": 400,
-							"_postman_previewlanguage": null,
+							"_postman_previewlanguage": "Text",
 							"header": [
 								{
 									"key": "Server",
@@ -227,7 +226,7 @@
 							"formdata": [
 								{
 									"key": "username",
-									"value": "sarahdoe@email.com.br",
+									"value": "alexdoe@email.com",
 									"type": "text"
 								},
 								{
@@ -292,7 +291,7 @@
 							},
 							"status": "OK",
 							"code": 200,
-							"_postman_previewlanguage": null,
+							"_postman_previewlanguage": "Text",
 							"header": [
 								{
 									"key": "Server",
@@ -376,7 +375,7 @@
 							},
 							"status": "Bad Request",
 							"code": 400,
-							"_postman_previewlanguage": null,
+							"_postman_previewlanguage": "Text",
 							"header": [
 								{
 									"key": "Server",
@@ -484,7 +483,7 @@
 							},
 							"status": "OK",
 							"code": 200,
-							"_postman_previewlanguage": null,
+							"_postman_previewlanguage": "Text",
 							"header": [
 								{
 									"key": "Server",
@@ -553,7 +552,7 @@
 							},
 							"status": "OK",
 							"code": 200,
-							"_postman_previewlanguage": null,
+							"_postman_previewlanguage": "Text",
 							"header": [
 								{
 									"key": "Server",
@@ -600,6 +599,95 @@
 							"body": "{\n    \"status\": \"error\"\n}"
 						}
 					]
+				},
+				{
+					"name": "Compile",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoxLCJlbWFpbCI6ImFsZXhkb2VAZW1haWwuY29tIiwiZXhwIjoxNzYxOTk5NDQxLCJpYXQiOjE3NjE4MjY2NDEuNTkyMzg3fQ.Bk6bSbLagc_uzzAmZiSwhgvIc6pr-zP9MQw-1hNiHjs",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "contract_file",
+									"type": "file",
+									"src": "/C:/Users/Victo/Downloads/SimpleStorage.sol"
+								}
+							]
+						},
+						"url": {
+							"raw": "https://localhost/api/v1/besu/compile-contract/",
+							"protocol": "https",
+							"host": [
+								"localhost"
+							],
+							"path": [
+								"api",
+								"v1",
+								"besu",
+								"compile-contract",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Deploy Signed",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoxLCJlbWFpbCI6ImFsZXhkb2VAZW1haWwuY29tIiwiZXhwIjoxNzYxOTk5NDQxLCJpYXQiOjE3NjE4MjY2NDEuNTkyMzg3fQ.Bk6bSbLagc_uzzAmZiSwhgvIc6pr-zP9MQw-1hNiHjs",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"signed_transaction\": \"f9036a018082012c8080b9031b608060405234801561001057600080fd5b506040516102fb3803806102fb833981810160405281019061003291906100c8565b806000819055503373ffffffffffffffffffffffffffffffffffffffff167fe42ab83e51dcfb436887e998d12b1585d6eea49b2900b0b3bcd0591dec7c3d198260405161007f9190610104565b60405180910390a25061011f565b600080fd5b6000819050919050565b6100a581610092565b81146100b057600080fd5b50565b6000815190506100c28161009c565b92915050565b6000602082840312156100de576100dd61008d565b5b60006100ec848285016100b3565b91505092915050565b6100fe81610092565b82525050565b600060208201905061011960008301846100f5565b92915050565b6101cd8061012e6000396000f3fe608060405234801561001057600080fd5b50600436106100415760003560e01c80632a1afcd91461004657806360fe47b1146100645780636d4ce63c14610080575b600080fd5b61004e61009e565b60405161005b919061011e565b60405180910390f35b61007e6004803603810190610079919061016a565b6100a4565b005b6100886100fc565b604051610095919061011e565b60405180910390f35b60005481565b806000819055503373ffffffffffffffffffffffffffffffffffffffff167fe42ab83e51dcfb436887e998d12b1585d6eea49b2900b0b3bcd0591dec7c3d19826040516100f1919061011e565b60405180910390a250565b60008054905090565b6000819050919050565b61011881610105565b82525050565b6000602082019050610133600083018461010f565b92915050565b600080fd5b61014781610105565b811461015257600080fd5b50565b6000813590506101648161013e565b92915050565b6000602082840312156101805761017f610139565b5b600061018e84828501610155565b9150509291505056fea264697066735822122043071242007a81bc30e6ff73e1130c05b04bf48b08c4b2767bd490a8e0e601e964736f6c634300080a0033000000000000000000000000000000000000000000000000000000000000002a820a96a0eab6851eb7fc8af3b53bae5af639d89a3b1f6a7281df6496fc9e4c7251cf6d49a02b7d6f11cb904d1e68efe121e3a7a67c5a0b7e34a55e9807784de375e7b93d33\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "https://localhost/api/v1/besu/deploy-signed/",
+							"protocol": "https",
+							"host": [
+								"localhost"
+							],
+							"path": [
+								"api",
+								"v1",
+								"besu",
+								"deploy-signed",
+								""
+							]
+						}
+					},
+					"response": []
 				}
 			]
 		},
@@ -626,7 +714,10 @@
 			"name": "New Request",
 			"request": {
 				"method": "GET",
-				"header": []
+				"header": [],
+				"url": {
+					"raw": ""
+				}
 			},
 			"response": []
 		}
