@@ -3,10 +3,11 @@ The platform provides endpoints for compiling and deploying Solidity smart contr
 This method keeps your private key secure by signing transactions locally before sending to the API.
 
 **Step 1: Compile Contract**
-- Endpoint: `POST https://localhost/api/v1/besu/compile-contract/`
+- Endpoint: `POST https://<address>/admin/api/v1/besu/compile-contract/`
 - Headers: `Authorization: Bearer <token>`
 - Body: form-data with `contract_file` (select .sol file)
 - Response includes: ABI, bytecode, and contract name
+- If using localhost, you may exclude `admin` from the URL 
 
 
 **Step 2: Sign Transaction Locally**
@@ -17,7 +18,7 @@ This method keeps your private key secure by signing transactions locally before
 - Copy the generated signed transaction hex
 
 **Step 3: Deploy Signed Transaction**
-- Endpoint: `POST https://localhost/api/v1/besu/deploy-signed/`
+- Endpoint: `POST https://<address>/admin/api/v1/besu/deploy-signed/`
 - Headers: `Authorization: Bearer <token>`, `Content-Type: application/json`
 - Body: raw JSON
   ```json
@@ -26,6 +27,8 @@ This method keeps your private key secure by signing transactions locally before
   }
   ```
 - Response includes: contract address, transaction hash, gas used
+- If using localhost, you may exclude `admin` from the URL 
+
 
 The following diagram illustrates the contract deployment flow using signed transactions:
 
