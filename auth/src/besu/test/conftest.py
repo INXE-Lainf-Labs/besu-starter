@@ -74,3 +74,40 @@ def mock_transaction():
     mock_tx = MagicMock()
     mock_tx.gas = 3000000
     return mock_tx
+
+
+@pytest.fixture
+def mock_compilation_success():
+    """
+    Mock de ContractCompilationResponse bem-sucedida
+    """
+    from src.besu.schemas import ContractCompilationResponse
+    return ContractCompilationResponse(
+        success=True,
+        abi=[{"name": "value", "type": "function"}],
+        bytecode="0x608060405234801561001057600080fd5b50"
+    )
+
+
+@pytest.fixture
+def mock_compilation_failed():
+    """
+    Mock de ContractCompilationResponse com falha
+    """
+    from src.besu.schemas import ContractCompilationResponse
+    return ContractCompilationResponse(
+        success=False,
+        error_message="Erro de compilação"
+    )
+
+
+@pytest.fixture
+def valid_deployer_address():
+    """Endereço Ethereum válido"""
+    return "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb"
+
+
+@pytest.fixture
+def invalid_deployer_address():
+    """Endereço Ethereum inválido"""
+    return "not-an-address"

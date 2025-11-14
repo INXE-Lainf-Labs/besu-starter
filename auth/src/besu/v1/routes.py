@@ -8,6 +8,7 @@ from src.core.repositories.users import UserBaseRepository, get_user_repository
 from src.besu.services import (
     is_besu_connected, 
     compile_solidity_contract,
+    prepare_deployment_transaction,
     broadcast_signed_transaction
 )
 from src.besu.schemas import (
@@ -42,6 +43,7 @@ async def compile_contract(
         web3_client: AsyncWeb3 = Depends(get_web3_client),
     ):
 
+<<<<<<< Updated upstream
     import json
     
     is_authorized = await check_authorization(authorization)
@@ -135,6 +137,22 @@ async def compile_contract(
             success=False,
             error_message=f"Erro ao preparar transação: {str(e)}"
         )
+=======
+    # Verifica se o usuário é admin
+    is_admin = await check_is_admin(authorization, user_repo)
+    
+    # 1. Compilar o contrato
+    compilation_result = await compile_solidity_contract(contract_file)
+    
+    # 2. Preparar transação de deployment (toda lógica delegada ao service)
+    return await prepare_deployment_transaction(
+        w3=web3_client,
+        compilation_result=compilation_result,
+        deployer_address=deployer_address,
+        constructor_params_json=constructor_params,
+        gas_limit=gas_limit
+    )
+>>>>>>> Stashed changes
 
 
 @besu_v1_router.post("/deploy-signed/", response_model=SignedTransactionResponse, status_code=HTTPStatus.OK)
