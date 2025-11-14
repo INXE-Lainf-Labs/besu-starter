@@ -22,28 +22,6 @@ async def prepare_deployment_transaction(
     constructor_params_json: str,
     gas_limit: int
 ) -> ContractCompilationResponse:
-    """
-    Prepara uma transação de deployment completa a partir de um contrato compilado.
-    
-    Esta função encapsula toda a lógica de:
-    - Parsing e validação dos parâmetros do construtor
-    - Validação e conversão do endereço do deployer
-    - Encodar o construtor do contrato
-    - Buscar informações da rede (nonce, gas_price, chain_id)
-    - Montar o objeto de transação completo
-    
-    Args:
-        w3: Cliente Web3 conectado ao Besu
-        compilation_result: Resultado da compilação do contrato (com abi e bytecode)
-        deployer_address: Endereço que fará o deploy
-        constructor_params_json: String JSON com parâmetros do construtor. Ex: "[42]" ou "[]"
-        gas_limit: Limite de gas para a transação
-        
-    Returns:
-        ContractCompilationResponse com success=True e transaction preenchida, ou
-        ContractCompilationResponse com success=False e error_message
-    """
-    import json
     
     # 1. Validar se a compilação foi bem-sucedida
     if not compilation_result.success:
@@ -335,12 +313,7 @@ async def broadcast_signed_transaction(
                     success=False,
                     error_message=f"Erro de nonce: {error_msg}. Verifique se o nonce está correto."
                 )
-            # não necessário 
-            # elif "balance" in error_msg.lower() or "funds" in error_msg.lower():
-            #     return SignedTransactionResponse(
-            #         success=False,
-            #         error_message=f"Saldo insuficiente: {error_msg}"
-            #     )
+
             else:
                 return SignedTransactionResponse(
                     success=False,
