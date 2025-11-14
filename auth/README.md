@@ -5,15 +5,20 @@ This method keeps your private key secure by signing transactions locally before
 **Step 1: Compile Contract**
 - Endpoint: `POST https://<address>/admin/api/v1/besu/compile-contract/`
 - Headers: `Authorization: Bearer <token>`
-- Body: form-data with `contract_file` (select .sol file)
-- Response includes: ABI, bytecode, and contract name
+- Body: form-data
+	-  `contract_file` (select .sol file)
+	-  `deployer_address`
+	-  `constructor_params`
+	-  `gas_limit`
+- Response includes: ABI, bytecode, and transaction object
 - If using localhost, you may exclude `admin` from the URL 
 
 
 **Step 2: Sign Transaction Locally**
+- Copy the `transaction` object from Step 1 response
 - Open [sign_transaction.py](src/misc/sign_transaction.py)
-- Add the ABI and bytecode from compilation
-- Configure constructor parameters
+- Paste the transaction object in the `TRANSACTION` variable
+- Set your `PRIVATE_KEY
 - Run: `python sign_transaction.py`
 - Copy the generated signed transaction hex
 
