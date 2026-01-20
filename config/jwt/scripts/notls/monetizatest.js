@@ -19,6 +19,34 @@ const contractJson = JSON.parse(fs.readFileSync(contractJsonPath));
 const contractAbi = contractJson.abi;
 const contractBytecode = contractJson.evm.bytecode.object
 
+
+const contractJsonPath_send = path.resolve(__dirname, '../', 'contracts', 'SendEther.json');
+const contractJson_send = JSON.parse(fs.readFileSync(contractJsonPath_send));
+const contractAbi_send = contractJson_send.abi;
+const contractBytecode_send = contractJson_send.evm.bytecode.object
+
+
+async function createContractSender() {
+  //console.log("Contract bytecode size:", contractBytecode.length / 2, "bytes");
+  const provider = new ethers.JsonRpcProvider(host);
+  const wallet = new ethers.Wallet(accountPrivateKey, provider);
+
+  // Deploy MonetizaFactory
+  const factory = new ethers.ContractFactory(contractAbi_send, contractBytecode_send, wallet);
+  //console.log(wallet.address);
+  const feeData = await provider.getFeeData();
+  const contract = await factory.deploy();
+  // The c
+
+  const deployed = await contract.waitForDeployment();
+  console.log("SendEther deployed at:", deployed.target);
+  return deployed.target;
+}
+
+async function sendAbi() {
+  return contractAbi_send;
+}
+
 //função utilizada pelo servidor para fazer o deploy do contrato inteligente
 async function createMasterContract() {
   //console.log("Contract bytecode size:", contractBytecode.length / 2, "bytes");
@@ -81,15 +109,18 @@ async function getusers(mastercontract) {
 
     for (const contract of contracts) {
       listuser.push(contract.args.owner)
-      
+
     }
 
     // Move to the next block range
     fromBlock = toBlock + 1;
     toBlock = fromBlock + step;
   }
+  if (listuser.length > 0) {
+    return listuser
+  } else { return ("Não existem usuarios") }
 
-  return listuser;
+
 
 }
 
@@ -123,7 +154,10 @@ async function existContract(mastercontract, wallet_user) {
     const contracts = await writableContract.queryFilter("ContractCreated", fromBlock, toBlock);
 
     for (const contract of contracts) {
+
+      //console.log(contract.args.owner.toLowerCase(), wallet_user)
       if (contract.args.owner == wallet_user) {
+
         return true;
       }
     }
@@ -164,7 +198,10 @@ async function getUserContract(mastercontract, wallet_user) {
     }
     const contracts = await writableContract.queryFilter("ContractCreated", fromBlock, toBlock);
 
+
+
     for (const contract of contracts) {
+      //console.log(contract)
       if (contract.args.owner == wallet_user) {
         return contract;
       }
@@ -234,13 +271,13 @@ async function getEventOpen(mastercontract, wallet_user) {
       return formatted
     } else {
       console.log("Não existe evento aberto");
-      return ""
+      return "Não existe evento aberto"
     }
 
 
   } else {
     console.log("contrato não existente");
-    return ""
+    return "contrato não existente"
   }
 }
 
@@ -253,6 +290,7 @@ async function getEventClose(mastercontract, wallet_user) {
   const wallet = new ethers.Wallet(accountPrivateKey, provider);
 
   helpadd = await getUserContract(mastercontract, wallet_user)
+  console.log(helpadd.args);
 
   const contractJsonPath2 = path.resolve(__dirname, '../', 'contracts', 'Monetiza.json');
   const contractJson2 = JSON.parse(fs.readFileSync(contractJsonPath2));
@@ -294,8 +332,6 @@ async function getEventClose(mastercontract, wallet_user) {
           usertank: parseFloat(ethers.formatUnits(log.args.usertank, decimals)).toFixed(2),
         };
         aux.push(helpaux)
-        console.log(helpaux)
-
       }
     }
 
@@ -304,8 +340,10 @@ async function getEventClose(mastercontract, wallet_user) {
     toBlock = fromBlock + step;
   }
 
+  if (aux.length > 0) {
+    return aux
+  } else { return "Não existe evento fechado" }
 
-  return aux;
 
 }
 
@@ -319,9 +357,9 @@ async function getPathEventOpen(mastercontract, wallet_user) {
 
   exist = await existContract(mastercontract, wallet_user);
 
-
   if (exist) {
     help = await getUserContract(mastercontract, wallet_user);
+
 
 
     if (await getOpenEventStatus(mastercontract, help.args.id) == true) {
@@ -345,6 +383,8 @@ async function getPathEventOpen(mastercontract, wallet_user) {
         };
       });
 
+      //console.log(trajetosFormatted)
+
       const formatted = {
         contractAddress,
         idEvent: idEvent.toString(), // convert BigInt if needed
@@ -353,12 +393,23 @@ async function getPathEventOpen(mastercontract, wallet_user) {
 
 
       return formatted;
+
     } else {
-      return "";
+      list = {
+        contractAddress: "",
+        idEvent: "", // convert BigInt if needed
+        listtrajetos: [],
+      }
+      return list;
     }
 
   } else {
-    return "";
+    list = {
+      contractAddress: "",
+      idEvent: "", // convert BigInt if needed
+      listtrajetos: [],
+    }
+    return list;
   }
 
 }
@@ -366,7 +417,10 @@ async function getPathEventOpen(mastercontract, wallet_user) {
 //recupera trajetos em eventos fechados
 async function getPathEventClose(mastercontract, wallet_user) {
 
+
   const provider = new ethers.JsonRpcProvider(host);
+
+  const wallet = new ethers.Wallet(accountPrivateKey, provider);
 
   helpadd = await getUserContract(mastercontract, wallet_user)
 
@@ -377,6 +431,7 @@ async function getPathEventClose(mastercontract, wallet_user) {
   const monetizaContract = new ethers.Contract(helpadd.args[1], contractAbi2, provider);
 
 
+
   const latestBlock = await provider.getBlockNumber();
   const step = 5000; // chunk size
   let fromBlock = 0;
@@ -384,8 +439,8 @@ async function getPathEventClose(mastercontract, wallet_user) {
   aux = [];
 
 
-  while (fromBlock <= latestBlock) {
 
+  while (fromBlock <= latestBlock) {
 
     if (toBlock > latestBlock) {
       toBlock = latestBlock;
@@ -393,7 +448,9 @@ async function getPathEventClose(mastercontract, wallet_user) {
     const logs = await monetizaContract.queryFilter("TrajetosRegistered", fromBlock, toBlock);
 
     for (const log of logs) {
+
       if (log.args.wallet == wallet_user) {
+
 
         const decimals = 18;
 
@@ -403,10 +460,10 @@ async function getPathEventClose(mastercontract, wallet_user) {
         const trajethelpauxosFormatted = log.args.listtrajetos.map((trajeto) => {
           return {
             storedHash: trajeto.storedHash,
-            dist: parseFloat(ethers.formatUnits(trajeto.dist, decimals)).toFixed(2),
-            fuel: parseFloat(ethers.formatUnits(trajeto.fuel, decimals)).toFixed(2),
-            time: parseFloat(ethers.formatUnits(trajeto.time, decimals)).toFixed(2),
-            timeless: parseFloat(ethers.formatUnits(trajeto.timeless, decimals)).toFixed(2),
+            dist: parseFloat(ethers.formatUnits(trajeto.dist, decimals)).toFixed(2).toString(),
+            fuel: parseFloat(ethers.formatUnits(trajeto.fuel, decimals)).toFixed(2).toString(),
+            time: parseFloat(ethers.formatUnits(trajeto.time, decimals)).toFixed(2).toString(),
+            timeless: parseFloat(ethers.formatUnits(trajeto.timeless, decimals)).toFixed(2).toString(),
 
           };
         });
@@ -416,7 +473,7 @@ async function getPathEventClose(mastercontract, wallet_user) {
           contractAddress: log.args.contractAddress,
           idevent: log.args.idEvent,
           listtrajetos: trajethelpauxosFormatted,
-          value: parseFloat(ethers.formatUnits(log.args.value, decimals)).toFixed(2),
+          value: parseFloat(ethers.formatUnits(log.args.value, decimals)).toFixed(2).toString(),
         };
         aux.push(formatted)
 
@@ -427,8 +484,11 @@ async function getPathEventClose(mastercontract, wallet_user) {
     fromBlock = toBlock + 1;
     toBlock = fromBlock + step;
   }
+
+
   return aux;
 }
+
 
 async function createUserContract(mastercontract, wallet_user) {
   const provider = new ethers.JsonRpcProvider(host);
@@ -437,6 +497,7 @@ async function createUserContract(mastercontract, wallet_user) {
   const readOnlyContract = new ethers.Contract(mastercontract, contractAbi, provider);
   const writableContract = readOnlyContract.connect(wallet);
   exist = await existContract(mastercontract, wallet_user);
+  console.log(exist);
 
   if (exist == false) {
     const txNew = await writableContract.createNewContract(wallet_user);
@@ -560,7 +621,6 @@ async function getcoin(mastercontract, wallet_user) {
 
     const decimals = 18; // depende do token
     const valuecon = parseFloat(ethers.formatUnits(value, decimals)).toFixed(2);
-    console.log(valuecon)
 
     if (valuecon > 0) {
 
@@ -575,12 +635,11 @@ async function getcoin(mastercontract, wallet_user) {
 
 
       const txNew = await writableContract.setcoin(help.args.id);
-      receipt = await txNew.wait();
-      console.log(receipt);
+       receipt = await txNew.wait();
 
       return value;
     }
-    return 0;
+    return 0.00;
 
   } else {
     console.log("contrato não existente");
@@ -791,18 +850,22 @@ async function insert_path(hash, tuple, mastercontract, wallet_user) {
 
         const receipt = await txNew.wait();
         console.log(receipt);
+        return ("dados veiculares inseridos")
       } else {
         console.log("vin diferente")
+        return ("vin diferente")
       }
 
     } else {
       console.log("Não existe evento em aberto")
+      return ("Não existe evento em aberto")
     }
 
 
 
   } else {
     console.log("contrato não existente");
+    return ("contrato não existente")
   }
 
 
@@ -814,6 +877,7 @@ async function insert_path(hash, tuple, mastercontract, wallet_user) {
 }
 
 if (require.main === module) {
+  createContractSender();
   createMasterContract();
   set_k();
   existContract();
@@ -830,10 +894,12 @@ if (require.main === module) {
   getEventClose();
   getuserscore();
   getusers();
+  sendAbi();
 }
 
 // Export both functions
 module.exports = {
+  createContractSender,
   createMasterContract,
   set_k,
   existContract,
@@ -849,7 +915,8 @@ module.exports = {
   getcoin,
   getEventClose,
   getuserscore,
-  getusers
+  getusers,
+  sendAbi
 };
 
 

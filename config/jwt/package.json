@@ -2,7 +2,7 @@
   "name": "tlsbloc",
   "version": "1.0.0",
   "description": "Teste",
-  "main": "JWT.js",
+  "main": "server.js",
   "scripts": {
     "test": "run",
     "compile": "node scripts/compile.js",

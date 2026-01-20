@@ -22,5 +22,5 @@ contract SendEther {
         require(sent, "Failed to send Ether");
     }
 
-  
+
 }

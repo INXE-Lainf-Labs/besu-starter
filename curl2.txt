@@ -1,0 +1,79 @@
+curl --header "Content-Type: application/json" \
+--request POST \
+--data '
+{
+  "wallet": "0xc0f53964ce977eb8e1ccf0427527b36f7f3ab9fd"
+}
+' http://localhost:3000/create/contract
+
+curl --header "Content-Type: application/json" --request POST --data '
+{
+  "wallet": "0xc0f53964ce977eb8e1ccf0427527b36f7f3ab9fd"
+}
+' http://localhost:3000/get/contract
+
+curl --header "Content-Type: application/json" --request POST --data '
+{
+  "wallet": "0xc0f53964ce977eb8e1ccf0427527b36f7f3ab9fd",
+  "data":
+    {
+        "vin": "1GBJC34R9XF017297",
+        "fuel_b": "30",
+        "abastecimento": "1",
+        "usertank": "40"
+    }
+}
+' http://localhost:3000/create/event
+
+curl --header "Content-Type: application/json" --request POST --data '
+{
+  "wallet": "0xc0f53964ce977eb8e1ccf0427527b36f7f3ab9fd"
+
+}
+' http://localhost:3000/close/event
+
+curl --header "Content-Type: application/json" --request POST --data '
+{
+  "wallet": "0xc0f53964ce977eb8e1ccf0427527b36f7f3ab9fd"
+
+}
+' http://localhost:3000/get/event/open
+
+curl --header "Content-Type: application/json" --request POST --data '
+{
+  "wallet": "0xc0f53964ce977eb8e1ccf0427527b36f7f3ab9fd"
+
+}
+' http://localhost:3000/get/event/close
+
+curl --header "Content-Type: application/json" --request POST --data '
+{
+  "wallet": "0xc0f53964ce977eb8e1ccf0427527b36f7f3ab9fd"
+
+}
+' http://localhost:3000/get/path/open
+
+curl --header "Content-Type: application/json" --request POST --data '
+{
+  "wallet": "0xc0f53964ce977eb8e1ccf0427527b36f7f3ab9fd"
+
+}
+' http://localhost:3000/get/path/close
+
+curl --header "Content-Type: application/json" --request POST --data '
+{
+  "wallet": "0xc0f53964ce977eb8e1ccf0427527b36f7f3ab9fd"
+
+}
+' http://localhost:3000/get/score
+
+curl --header "Content-Type: application/json" --request POST --data '
+{
+  "wallet": "0xc0f53964ce977eb8e1ccf0427527b36f7f3ab9fd"
+
+}
+' http://localhost:3000/get/coin
+
+curl --header "Content-Type: application/json" --request GET  http://localhost:3000/get/users
+
+curl --header "Content-Type: application/json" --request GET http://192.168.1.151:3000/get/sendcontract

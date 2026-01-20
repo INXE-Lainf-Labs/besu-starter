@@ -6,10 +6,10 @@ const Web3 = require('web3');
 const { besu, accounts } = require("../keys.js");
 const host = besu.rpcnode.url;
 
-async function main(ac) {
+async function main(ac, value) {
 
 
-  console.log(ac.acc)
+  console.log(ac)
 
   const web3 = new Web3(host);
   //pre seeded account - test account only
@@ -20,7 +20,7 @@ async function main(ac) {
   console.log(accountA.address);
 
 
-  var accountBBalance = web3.utils.fromWei(await web3.eth.getBalance(ac.acc));
+  var accountBBalance = web3.utils.fromWei(await web3.eth.getBalance(ac));
   console.log("Account B has balance of: " + accountBBalance);
 
 
@@ -30,8 +30,8 @@ async function main(ac) {
   const txn = {
     nonce: web3.utils.numberToHex(await web3.eth.getTransactionCount(accountA.address)),
     from: accountA.address,
-    to: ac.acc,
-    value: "0xde0b6b3a7640000",  //amount of eth to transfer
+    to: ac,
+    value: Number(value),  //amount of eth to transfer
     gasPrice: "0x0", //ETH per unit of gas
     gasLimit: "0x24A22" //max number of gas units the tx is allowed to use
   };
@@ -45,7 +45,7 @@ async function main(ac) {
   //After the transaction there should be some ETH transferred
   accountABalance = web3.utils.fromWei(await web3.eth.getBalance(accountA.address));
   console.log("Account A has an updated balance of: " + accountABalance);
-  accountBBalance = web3.utils.fromWei(await web3.eth.getBalance(ac.acc));
+  accountBBalance = web3.utils.fromWei(await web3.eth.getBalance(ac));
   console.log("Account B has an updated balance of: " + accountBBalance);
 
 }

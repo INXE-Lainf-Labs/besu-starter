@@ -1,0 +1,44 @@
+@startuml
+"Usuario" as User
+"Administrador" as Admin
+"Posto de combustível" as posto
+
+
+package Aplicativo_movél {
+  usecase "Cadastrar" as UC1
+  usecase "Obter dados pessoais" as UC2
+  usecase "Fechar eventos de abastecimento" as UC3
+  usecase "Obter eventos de abastecimento" as UC4
+  usecase "Obter Trajetos de abastecimento" as UC5
+  usecase "Obter Pontuação" as UC6
+  usecase "Enviar dados veiculares" as UC7
+  usecase "Comprar dados veiculares" as UC8
+  usecase "Comprar creditos digitias" as UC9
+  usecase "Enviar creditos digitias" as UC10
+   usecase "Visualizar dados veiculares" as UC11
+}
+
+package Plataforma {
+  usecase "Criar evento de abastecimento" as UD1
+  usecase "Enviar creditos digitias por eventos" as  UD2
+  usecase "Obter Pontuação" as  UD3
+}
+
+User --> UC1
+User --> UC2
+User -->   UC3
+User -->  UC4
+User -->   UC5
+User -->  UC6
+User -->  UC7
+User -->  UC8
+User -->  UC9
+User -->  UC10
+User -->  UC11
+Admin --> UD1
+Admin --> UD2
+Admin --> UD3
+posto --> UD1
+posto --> UD3
+
+@enduml
