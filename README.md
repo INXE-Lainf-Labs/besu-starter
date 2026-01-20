@@ -65,6 +65,14 @@ curl --header "Content-Type: application/json" \
 
 ```
 
+Caso você deseje enviar informações ou realizar testes, há dois arquivos que podem ser utilizados. O primeiro é o curltest, no qual é possível alterar a carteira (wallet) utilizada nas requisições. O segundo arquivo, testandroid.sh, é responsável pelo envio de informações veiculares. Para executá-lo, utilize o comando:
+
+```
+./testandroid.sh
+```
+
+Observe que pode ser necessário alterar a carteira de identificação caso você queira utilizar outro endereço para testar o processo de monetização de dados. Essas informações podem ser visualizadas via curl ou por meio do aplicativo Android de captura de dados veiculares.
+
 Você pode verificar essas funcionalidades na pasta config/jwt. Dentro desse diretório encontram-se os contratos utilizados no processo de monetização, escritos em Solidity, além de todas as bibliotecas necessárias para o seu funcionamento. Caso seja necessário compilar novos contratos, utilize o script compile.js. Os contratos podem ser divididos em:
 
 Contrato Controlador :
