@@ -355,7 +355,7 @@ app.post('/get/event/close', async (req, res) => {
 
         // End the stream
         transformStream.end();
-       
+
     } else {
 
         res.status(401).json(resp);
@@ -519,7 +519,7 @@ app.post('/get/path/close', async (req, res) => {
 
         // End the stream
         transformStream.end();
-       
+
     } catch (error) {
         console.error('Error:', error);
         if (!res.headersSent) {
@@ -605,7 +605,7 @@ app.post('/get/coin', async (req, res) => {
                 //const weiValue = await ethers.parseUnits(resp.toString(), decimals);
 
 
-                const web3 = new Web3("http://172.16.239.71/testeu/");
+                const web3 = new Web3("http://validator1/testeu/");
                 console.log(Number(resp.toString()))
 
 
@@ -782,7 +782,8 @@ async function createwallettransaction() {
 
 
 app.listen(3000, async () => {
-    const uri = 'mongodb://admin:password@localhost:27017/monetiza?authSource=admin';
+    const uri = 'mongodb://admin:password@mongodb:27017/monetiza?authSource=admin';
+    
     //0xC9C913c8c3C1Cd416d80A0abF475db2062F161f6
     // Connect to MongoDB
     mongoose.connect(uri)
