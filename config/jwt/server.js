@@ -782,7 +782,7 @@ async function createwallettransaction() {
 
 
 app.listen(3000, async () => {
-    const uri = 'mongodb://admin:password@mongodb:27017/monetiza?authSource=admin';
+    const uri = 'mongodb://admin:password@localhost:27017/monetiza?authSource=admin';
     
     //0xC9C913c8c3C1Cd416d80A0abF475db2062F161f6
     // Connect to MongoDB

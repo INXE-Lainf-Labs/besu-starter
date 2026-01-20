@@ -17,7 +17,7 @@ x-besu-def:
       --config-file=/config/configu.toml \
       --p2p-host=$$(hostname -i) \
       --rpc-http-api=EEA,WEB3,ETH,NET,TRACE,DEBUG,ADMIN,TXPOOL,PERM,${BESU_CONS_ALGO:-QBFT} \
-
+    
 x-ethsignerProxy-def:
   &ethsignerProxy-def
   restart: "on-failure"
@@ -40,21 +40,7 @@ x-ethsignerProxy-def:
 
 services:
 
-  nodetls:
-    restart: "on-failure"
-    build: 
-     context: ./config/jwt  
-     dockerfile: ./Dockerfile
-    container_name: node 
-    image: nodetls
-    depends_on:
-      validator1:
-        condition: service_healthy
-    networks:
-      quorum-dev-quickstart:
-         ipv4_address: 172.16.239.72
-    ports: 
-         - 3000:3000
+ 
 
   caddy:
     image: caddy:latest
@@ -88,6 +74,7 @@ services:
     networks:
       quorum-dev-quickstart:
         ipv4_address: 172.16.239.11
+   
 
   validator2:
     << : *besu-def

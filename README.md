@@ -8,23 +8,21 @@ A plataforma oferece suporte a diversos algoritmos de consenso, incluindo Proof 
 
 ## Tecnologias
 
-Besu
+Besu - 23.4.1
 
-ETHSigner
+ETHSigner - 23.6
 
-QUORUM_EXPLORER
+Quorum_Explorer - 4f60191
 
-Caddy
+Caddy -  latest
 
-MongoDB
+MongoDB - latest
 
-mongo-express
+Mongo-express - latest
 
-Solidity 
+Solidity - 0.8.10
 
-JS
-
-node express
+Javascript - 18-alpine
 
 ## Iniciar rede
 
@@ -50,7 +48,7 @@ node server.js
 ```
 
 
-Após os containers estarem disponíveis, é possível testar todos os endpoints utilizados. No arquivo curl.txt estão listadas todas as opções disponíveis na rede, as quais são posteriormente utilizadas pelo aplicativo de captura de dados veiculares. A seguir, apresenta-se um exemplo de execução de um comando utilizando o curl:
+Após os containers estarem disponíveis, é possível testar todos os endpoints utilizados. No arquivo curl.txt estão listadas todas as opções disponíveis na rede, as quais são posteriormente utilizadas pelo aplicativo de captura de dados veiculares. A seguir, apresenta-se um exemplo de execução localmente de um comando utilizando o curl:
 
 ```
 curl --header "Content-Type: application/json" \
@@ -62,7 +60,6 @@ curl --header "Content-Type: application/json" \
   "usertank": "40"
 }
 ' http://localhost:3000/create/contract
-
 ```
 
 Caso você deseje enviar informações ou realizar testes, há dois arquivos que podem ser utilizados. O primeiro é o curltest, no qual é possível alterar a carteira (wallet) utilizada nas requisições. O segundo arquivo, testandroid.sh, é responsável pelo envio de informações veiculares. Para executá-lo, utilize o comando:
