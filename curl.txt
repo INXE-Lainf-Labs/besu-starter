@@ -27,7 +27,7 @@ curl --header "Content-Type: application/json" \
 }
 ' http://localhost:3000/create/contract
 
-curl --header "Content-Type: application/json" --request GET --data '
+curl --header "Content-Type: application/json" --request POST --data '
 {
   "wallet": "0x4288201baC903F84648E81A07F793C9E7d893692"
 }
@@ -91,7 +91,7 @@ curl --header "Content-Type: application/json" --request POST --data '
   "wallet": "0x4288201baC903F84648E81A07F793C9E7d893692"
 
 }
-' http://localhost:3000/get/coin
+' http://10.26.109.134/jwtserver/get/coin
 
 curl --header "Content-Type: application/json" --request GET  http://192.168.1.152:3000/get/users
 
@@ -104,4 +104,4 @@ curl --header "Content-Type: application/json" \
 {
   "wallet": "0x1e3f6125549a40bc013972ea12683bd5bad9e125"
 }
-' http://localhost:3000/get/user
+' http://10.26.109.134/jwtserver/

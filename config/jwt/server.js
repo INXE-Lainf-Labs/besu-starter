@@ -105,8 +105,11 @@ app.post('/create/contract', async (req, res) => {
             main_contract = owners[0];
             const publicAddress = getAddress(req.body.wallet);
             await monetiza.createUserContract(main_contract.add, publicAddress);
+            res.status(200).json('Contrato criado com sucesso');
+        } else {
+            res.status(400).json({ Existe });
         }
-        res.status(200).json('Contrato criado com sucesso');
+
     } catch (err) {
         console.log(err.message);
         res.status(400).json({ error: err.message });
@@ -160,13 +163,25 @@ app.post('/get/contract', async (req, res) => {
     console.log(owners)
     const publicAddress = getAddress(req.body.wallet);
 
-    if (await monetiza.existContract(main_contract.add, publicAddress)) {
+    const Record = mongoose.model('Record', uservalues);
+    //console.log(req.body)
+    const search = await Record.find({ wallet: req.body.wallet });
+    //console.log(search)
 
-        resp = await monetiza.getUserContract(main_contract.add, publicAddress);
-        res.status(200).json(resp);
-        //executar um rotina para fechar contrato
+
+    if (search === undefined || search.length == 0) {
+        return res.status(404).json('Usuario não existe');
+
     } else {
-        res.status(404).json('Não existe contrato');
+
+        if (await monetiza.existContract(main_contract.add, publicAddress)) {
+
+            resp = await monetiza.getUserContract(main_contract.add, publicAddress);
+            res.status(200).json(resp);
+            //executar um rotina para fechar contrato
+        } else {
+            res.status(404).json('Não existe contrato');
+        }
     }
 });
 
@@ -273,8 +288,32 @@ app.post('/close/event', async (req, res) => {
     main_contract = owners[0];
     const publicAddress = getAddress(req.body.wallet);
 
-    await monetiza.closeUserEvent(main_contract.add, publicAddress);
-    res.status(200).json('Evento fechado');
+    const Record = mongoose.model('Record', uservalues);
+    //console.log(req.body)
+    const search = await Record.find({ wallet: req.body.wallet });
+    //console.log(search)
+
+
+    if (search === undefined || search.length == 0) {
+        return res.status(404).json('Usuario não existe');
+
+    } else {
+
+        const Record = mongoose.model('Record', uservalues);
+        //console.log(req.body)
+        const search = await Record.find({ wallet: req.body.wallet });
+        //console.log(search)
+
+
+        if (search === undefined || search.length == 0) {
+            return res.status(404).json('Usuario não existe');
+
+        } else {
+
+            await monetiza.closeUserEvent(main_contract.add, publicAddress);
+            res.status(200).json('Evento fechado');
+        }
+    }
 });
 
 
@@ -284,25 +323,37 @@ app.post('/get/event/open', async (req, res) => {
     main_contract = owners[0];
     const publicAddress = getAddress(req.body.wallet);
 
-    resp = await monetiza.getEventOpen(main_contract.add, publicAddress);
+    const Record = mongoose.model('Record', uservalues);
+    //console.log(req.body)
+    const search = await Record.find({ wallet: req.body.wallet });
+    //console.log(search)
 
-    if (resp != "contrato não existente") {
-        if (resp != "Não existe evento aberto") {
 
-            const replacer = (key, value) => {
-                if (typeof value === 'bigint') {
-                    return value.toString();
-                }
-                return value;
-            };
-            const jsonString = JSON.stringify(resp, replacer);
-            res.status(200).send(jsonString);
+    if (search === undefined || search.length == 0) {
+        return res.status(404).json('Usuario não existe');
+
+    } else {
+
+        resp = await monetiza.getEventOpen(main_contract.add, publicAddress);
+
+        if (resp != "contrato não existente") {
+            if (resp != "Não existe evento aberto") {
+
+                const replacer = (key, value) => {
+                    if (typeof value === 'bigint') {
+                        return value.toString();
+                    }
+                    return value;
+                };
+                const jsonString = JSON.stringify(resp, replacer);
+                res.status(200).send(jsonString);
+            } else {
+                res.status(401).json(resp);
+            }
+
         } else {
             res.status(401).json(resp);
         }
-
-    } else {
-        res.status(401).json(resp);
     }
 
 
@@ -316,49 +367,62 @@ app.post('/get/event/close', async (req, res) => {
     main_contract = owners[0];
     const publicAddress = getAddress(req.body.wallet);
 
-    resp = await monetiza.getEventClose(main_contract.add, publicAddress);
-    // Set headers for streaming
 
-    if (resp != "Não existe evento fechado") {
-
-        res.setHeader('Content-Type', 'application/json');
-        res.setHeader('Transfer-Encoding', 'chunked');
-
-        // Create a transform stream that handles bigint conversion
-        const transformStream = JSONStream.stringify();
-
-        // Pipe the transform stream to the response
-        transformStream.pipe(res);
-        //console.log(resp);
+    const Record = mongoose.model('Record', uservalues);
+    //console.log(req.body)
+    const search = await Record.find({ wallet: req.body.wallet });
+    //console.log(search)
 
 
-
-        const replacer = (key, value) => {
-            if (typeof value === 'bigint') {
-                return value.toString();
-            }
-            return value;
-        };
-
-        // Process each item and stream it
-        for (const item of resp) {
-            // Convert bigint to string for each item
-            const serializableItem = JSON.parse(JSON.stringify(item, (key, value) => {
-                return typeof value === 'bigint' ? value.toString() : value;
-            }));
-
-            transformStream.write(serializableItem);
-            console.log(serializableItem)
-        }
-
-
-
-        // End the stream
-        transformStream.end();
+    if (search === undefined || search.length == 0) {
+        return res.status(404).json('Usuario não existe');
 
     } else {
 
-        res.status(401).json(resp);
+        resp = await monetiza.getEventClose(main_contract.add, publicAddress);
+        // Set headers for streaming
+
+        if (resp != "Não existe evento fechado") {
+
+            res.setHeader('Content-Type', 'application/json');
+            res.setHeader('Transfer-Encoding', 'chunked');
+
+            // Create a transform stream that handles bigint conversion
+            const transformStream = JSONStream.stringify();
+
+            // Pipe the transform stream to the response
+            transformStream.pipe(res);
+            //console.log(resp);
+
+
+
+            const replacer = (key, value) => {
+                if (typeof value === 'bigint') {
+                    return value.toString();
+                }
+                return value;
+            };
+
+            // Process each item and stream it
+            for (const item of resp) {
+                // Convert bigint to string for each item
+                const serializableItem = JSON.parse(JSON.stringify(item, (key, value) => {
+                    return typeof value === 'bigint' ? value.toString() : value;
+                }));
+
+                transformStream.write(serializableItem);
+                console.log(serializableItem)
+            }
+
+
+
+            // End the stream
+            transformStream.end();
+
+        } else {
+
+            res.status(401).json(resp);
+        }
     }
 });
 
@@ -366,85 +430,25 @@ app.post('/get/event/close', async (req, res) => {
 //recupera dados veiculares de um evento aberto  ligado a um contrato do usuario
 app.post('/get/path/open', async (req, res) => {
 
+    const Record = mongoose.model('Record', uservalues);
+    //console.log(req.body)
+    const search = await Record.find({ wallet: req.body.wallet });
+    //console.log(search)
 
 
-    owners = await get_constract();
-    main_contract = owners[0];
-    const publicAddress = getAddress(req.body.wallet);
+    if (search === undefined || search.length == 0) {
+        return res.status(404).json('Usuario não existe');
 
-
-    resp = await monetiza.getPathEventOpen(main_contract.add, publicAddress);
-    // Set headers for streaming
-    res.setHeader('Content-Type', 'application/json');
-    res.setHeader('Transfer-Encoding', 'chunked');
-
-    // Create a transform stream that handles bigint conversion
-    const transformStream = JSONStream.stringify();
-
-
-
-    i = 0;
-    var newitem = []
-    //console.log(resp)
-
-
-    if (resp.listtrajetos.length > 0) {
-
-
-        for (const hash of resp.listtrajetos) {
-
-            listlatlong = []
-
-            //console.log(hash)
-
-            const Record = mongoose.model('Recordpath', RecordSchema);
-            const id = ethers.decodeBytes32String(hash.storedHash);
-
-            const record = await Record.findById(id);
-            //console.log(record.toString() )
-            for (latlong of record.data) {
-                //console.log(latlong.userdata.pos);
-                listlatlong.push(latlong.userdata.pos)
-            }
-
-
-            resp["listtrajetos"][i]["pos"] = listlatlong
-            i++
-            //item.listtrajetos.push(listlatlong)
-
-            // console.log(item)
-
-
-        }
-
-        // Pipe the transform stream to the response
-        transformStream.pipe(res);
-        transformStream.write(resp);
-        // End the stream
-        transformStream.end();
-
-        //res.status(200).json("Trajeto aberto enviado");
     } else {
-        res.status(401).json("Não há trajetos abertos");
-    }
-
-
-});
 
 
 
-
-//recuperar o array de dados no mongo 
-//recupera dados veiculares de eventos fechados  ligado a um contrato do usuario
-app.post('/get/path/close', async (req, res) => {
-    try {
-
-        const publicAddress = getAddress(req.body.wallet);
         owners = await get_constract();
         main_contract = owners[0];
+        const publicAddress = getAddress(req.body.wallet);
 
-        resp = await monetiza.getPathEventClose(main_contract.add, publicAddress);
-        console.log(resp)
+
+        resp = await monetiza.getPathEventOpen(main_contract.add, publicAddress);
         // Set headers for streaming
         res.setHeader('Content-Type', 'application/json');
         res.setHeader('Transfer-Encoding', 'chunked');
@@ -452,27 +456,18 @@ app.post('/get/path/close', async (req, res) => {
         // Create a transform stream that handles bigint conversion
         const transformStream = JSONStream.stringify();
 
-        // Pipe the transform stream to the response
-        transformStream.pipe(res);
-
-        const replacer = (key, value) => {
-            if (typeof value === 'bigint') {
-                return value.toString();
-            }
-            return value;
-        };
 
 
+        i = 0;
+        var newitem = []
+        //console.log(resp)
 
-        // Process each item and stream it
-        for (const item of resp) {
-            // Convert bigint to string for each item
-            var newitem = []
 
-            //console.log(item);
-            i = 0;
+        if (resp.listtrajetos.length > 0) {
 
-            for (const hash of item.listtrajetos) {
+
+            for (const hash of resp.listtrajetos) {
+
                 listlatlong = []
 
                 //console.log(hash)
@@ -488,9 +483,8 @@ app.post('/get/path/close', async (req, res) => {
                 }
 
 
-                item["listtrajetos"][i]["pos"] = listlatlong
+                resp["listtrajetos"][i]["pos"] = listlatlong
                 i++
-                newitem = item
                 //item.listtrajetos.push(listlatlong)
 
                 // console.log(item)
@@ -498,28 +492,121 @@ app.post('/get/path/close', async (req, res) => {
 
             }
 
+            // Pipe the transform stream to the response
+            transformStream.pipe(res);
+            transformStream.write(resp);
+            // End the stream
+            transformStream.end();
 
-            //console.log(newitem)
-            //console.log(serializableItem)
-            const serializableItem = JSON.parse(JSON.stringify(newitem, (key, value) => {
+            //res.status(200).json("Trajeto aberto enviado");
+        } else {
+            res.status(401).json("Não há trajetos abertos");
+        }
+    }
+
+
+});
+
+
+
+
+//recuperar o array de dados no mongo 
+//recupera dados veiculares de eventos fechados  ligado a um contrato do usuario
+app.post('/get/path/close', async (req, res) => {
+    try {
+
+        const Record = mongoose.model('Record', uservalues);
+        //console.log(req.body)
+        const search = await Record.find({ wallet: req.body.wallet });
+        //console.log(search)
+
+
+        if (search === undefined || search.length == 0) {
+            return res.status(404).json('Usuario não existe');
+
+        } else {
+            const publicAddress = getAddress(req.body.wallet);
+            owners = await get_constract();
+            main_contract = owners[0];
+
+            resp = await monetiza.getPathEventClose(main_contract.add, publicAddress);
+            console.log(resp)
+            // Set headers for streaming
+            res.setHeader('Content-Type', 'application/json');
+            res.setHeader('Transfer-Encoding', 'chunked');
+
+            // Create a transform stream that handles bigint conversion
+            const transformStream = JSONStream.stringify();
+
+            // Pipe the transform stream to the response
+            transformStream.pipe(res);
+
+            const replacer = (key, value) => {
                 if (typeof value === 'bigint') {
                     return value.toString();
                 }
                 return value;
-            }));
+            };
 
 
-            transformStream.write(serializableItem);
 
+            // Process each item and stream it
+            for (const item of resp) {
+                // Convert bigint to string for each item
+                var newitem = []
+
+                //console.log(item);
+                i = 0;
+
+                for (const hash of item.listtrajetos) {
+                    listlatlong = []
+
+                    //console.log(hash)
+
+                    const Record = mongoose.model('Recordpath', RecordSchema);
+                    const id = ethers.decodeBytes32String(hash.storedHash);
+
+                    const record = await Record.findById(id);
+                    //console.log(record.toString() )
+                    for (latlong of record.data) {
+                        //console.log(latlong.userdata.pos);
+                        listlatlong.push(latlong.userdata.pos)
+                    }
+
+
+                    item["listtrajetos"][i]["pos"] = listlatlong
+                    i++
+                    newitem = item
+                    //item.listtrajetos.push(listlatlong)
+
+                    // console.log(item)
+
+
+                }
+
+
+                //console.log(newitem)
+                //console.log(serializableItem)
+                const serializableItem = JSON.parse(JSON.stringify(newitem, (key, value) => {
+                    if (typeof value === 'bigint') {
+                        return value.toString();
+                    }
+                    return value;
+                }));
+
+
+                transformStream.write(serializableItem);
+
+
+            }
+
+            //const id = ethers.decodeBytes32String(encodedId);
+            //const record = await Record.findById(id);
+
+            // End the stream
+            transformStream.end();
 
         }
-
-        //const id = ethers.decodeBytes32String(encodedId);
-        //const record = await Record.findById(id);
-
-        // End the stream
-        transformStream.end();
-
     } catch (error) {
         console.error('Error:', error);
         if (!res.headersSent) {
@@ -534,19 +621,32 @@ app.post('/get/score', async (req, res) => {
     main_contract = owners[0];
     const publicAddress = getAddress(req.body.wallet);
 
-    resp = await monetiza.getuserscore(main_contract.add, publicAddress);
-    if (resp != false) {
-        const replacer = (key, value) => {
-            if (typeof value === 'bigint') {
-                return value.toString();
-            }
-            return value;
-        };
+    const Record = mongoose.model('Record', uservalues);
+    //console.log(req.body)
+    const search = await Record.find({ wallet: req.body.wallet });
+    //console.log(search)
 
-        const jsonString = JSON.stringify(resp, replacer);
-        res.status(200).send(jsonString);
 
-    } else { res.status(404).send("contrato não existente"); }
+    if (search === undefined || search.length == 0) {
+        return res.status(404).json('Usuario não existe');
+
+    } else {
+
+
+        resp = await monetiza.getuserscore(main_contract.add, publicAddress);
+        if (resp != false) {
+            const replacer = (key, value) => {
+                if (typeof value === 'bigint') {
+                    return value.toString();
+                }
+                return value;
+            };
+
+            const jsonString = JSON.stringify(resp, replacer);
+            res.status(200).send(jsonString);
+
+        } else { res.status(404).send("contrato não existente"); }
+    }
 });
 
 //pagamento de eventos fechados todo. 
@@ -782,8 +882,8 @@ async function createwallettransaction() {
 
 
 app.listen(3000, async () => {
-    const uri = 'mongodb://admin:password@localhost:27017/monetiza?authSource=admin';
-    
+    const uri = 'mongodb://admin:password@mongodb:27017/monetiza?authSource=admin';
+
     //0xC9C913c8c3C1Cd416d80A0abF475db2062F161f6
     // Connect to MongoDB
     mongoose.connect(uri)
