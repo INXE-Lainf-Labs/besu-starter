@@ -1,5 +1,6 @@
   /*
- nodetls:
+
+  nodetls:
     restart: "on-failure"
     build: 
      context: ./config/jwt  
@@ -7,11 +8,14 @@
     container_name: node 
     image: nodetls
     depends_on:
-      validator1:
-        condition: service_healthy  
+      rpcnode-admin:
+        condition: service_healthy 
+         
     networks:
       quorum-dev-quickstart:
          ipv4_address: 172.16.239.72
     ports: 
-         - 3000:3000
+        - 3000:3000
+
+
   */

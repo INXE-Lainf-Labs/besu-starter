@@ -51,9 +51,13 @@ const UserDataSchema = new mongoose.Schema({
     processada: String,
 });
 
-const DataItemSchema = new mongoose.Schema({
+const uservehicleSchema = new mongoose.Schema({
     vin: String,
     userdata: UserDataSchema,
+})
+
+const DataItemSchema = new mongoose.Schema({
+    uservehicle: uservehicleSchema
 });
 
 
@@ -74,8 +78,6 @@ const uservalues = new mongoose.Schema({
     vin: String,
     usertank: Number
 });
-
-
 
 const owner_contract = new mongoose.Schema({
     add: String,
@@ -107,7 +109,7 @@ app.post('/create/contract', async (req, res) => {
             await monetiza.createUserContract(main_contract.add, publicAddress);
             res.status(200).json('Contrato criado com sucesso');
         } else {
-            res.status(400).json({ Existe });
+            res.status(400).json("Não Existe");
         }
 
     } catch (err) {
@@ -170,7 +172,7 @@ app.post('/get/contract', async (req, res) => {
 
 
     if (search === undefined || search.length == 0) {
-        return res.status(404).json('Usuario não existe');
+        return res.status(404).json('Usuario não existe recupera');
 
     } else {
 
@@ -226,7 +228,7 @@ app.post('/create/event', async (req, res) => {
     //console.log(search)
 
     if (search === undefined || search.length == 0) {
-        res.status(404).json('Usuario não existe');
+        res.status(404).json('Usuario não existe cria');
 
     } else {
 
@@ -288,6 +290,7 @@ app.post('/close/event', async (req, res) => {
     main_contract = owners[0];
     const publicAddress = getAddress(req.body.wallet);
 
+
     const Record = mongoose.model('Record', uservalues);
     //console.log(req.body)
     const search = await Record.find({ wallet: req.body.wallet });
@@ -295,25 +298,14 @@ app.post('/close/event', async (req, res) => {
 
 
     if (search === undefined || search.length == 0) {
-        return res.status(404).json('Usuario não existe');
+        return res.status(404).json('Usuario não existe fecha evento');
 
     } else {
 
-        const Record = mongoose.model('Record', uservalues);
-        //console.log(req.body)
-        const search = await Record.find({ wallet: req.body.wallet });
-        //console.log(search)
-
-
-        if (search === undefined || search.length == 0) {
-            return res.status(404).json('Usuario não existe');
-
-        } else {
-
-            await monetiza.closeUserEvent(main_contract.add, publicAddress);
-            res.status(200).json('Evento fechado');
-        }
+        await monetiza.closeUserEvent(main_contract.add, publicAddress);
+        res.status(200).json('Evento fechado');
     }
+
 });
 
 
@@ -330,7 +322,7 @@ app.post('/get/event/open', async (req, res) => {
 
 
     if (search === undefined || search.length == 0) {
-        return res.status(404).json('Usuario não existe');
+        return res.status(404).json('Usuario não existe open event');
 
     } else {
 
@@ -366,16 +358,14 @@ app.post('/get/event/close', async (req, res) => {
     owners = await get_constract();
     main_contract = owners[0];
     const publicAddress = getAddress(req.body.wallet);
-
-
     const Record = mongoose.model('Record', uservalues);
-    //console.log(req.body)
     const search = await Record.find({ wallet: req.body.wallet });
-    //console.log(search)
+    console.log(req.body)
+    console.log(search)
 
 
     if (search === undefined || search.length == 0) {
-        return res.status(404).json('Usuario não existe');
+        return res.status(404).json('Usuario não existe close event');
 
     } else {
 
@@ -437,7 +427,7 @@ app.post('/get/path/open', async (req, res) => {
 
 
     if (search === undefined || search.length == 0) {
-        return res.status(404).json('Usuario não existe');
+        return res.status(404).json('Usuario não existe get open path');
 
     } else {
 
@@ -478,8 +468,8 @@ app.post('/get/path/open', async (req, res) => {
                 const record = await Record.findById(id);
                 //console.log(record.toString() )
                 for (latlong of record.data) {
-                    //console.log(latlong.userdata.pos);
-                    listlatlong.push(latlong.userdata.pos)
+
+                    listlatlong.push(latlong.uservehicle.userdata.pos);
                 }
 
 
@@ -522,7 +512,7 @@ app.post('/get/path/close', async (req, res) => {
 
 
         if (search === undefined || search.length == 0) {
-            return res.status(404).json('Usuario não existe');
+            return res.status(404).json('Usuario não existe close path');
 
         } else {
             const publicAddress = getAddress(req.body.wallet);
@@ -565,15 +555,17 @@ app.post('/get/path/close', async (req, res) => {
 
                     const Record = mongoose.model('Recordpath', RecordSchema);
                     const id = ethers.decodeBytes32String(hash.storedHash);
+                    const record = await Record.findById(id)
+                    console.log(record)
 
-                    const record = await Record.findById(id);
-                    //console.log(record.toString() )
-                    for (latlong of record.data) {
-                        //console.log(latlong.userdata.pos);
-                        listlatlong.push(latlong.userdata.pos)
+                    for (const latlong of record.data) {
+
+                        listlatlong.push(latlong.uservehicle.userdata.pos);
+
                     }
 
-
+                    item.listtrajetos ??= [];
+                    item.listtrajetos[i] ??= {};
                     item["listtrajetos"][i]["pos"] = listlatlong
                     i++
                     newitem = item
@@ -628,7 +620,7 @@ app.post('/get/score', async (req, res) => {
 
 
     if (search === undefined || search.length == 0) {
-        return res.status(404).json('Usuario não existe');
+        return res.status(404).json('Usuario não existe score');
 
     } else {
 
@@ -663,7 +655,7 @@ app.post('/get/coin', async (req, res) => {
 
 
     if (search === undefined || search.length == 0) {
-        return res.status(404).json('Usuario não existe');
+        return res.status(404).json('Usuario não existe moeda');
 
     } else {
 
@@ -763,12 +755,14 @@ app.post('/send/data/vehicle', async (req, res) => {
 
     try {
         const record = new Record(req.body);
+        console.log(req.body.data)
         const hash = await record.save();
         console.log(hash._id);
         console.log(record.wallet);
         owners = await get_constract();
         main_contract = owners[0];
-        return res.status(200).json(await monetiza.insert_path(hash, record, main_contract.add, publicAddress));
+        return res.status(200).json(await monetiza.insert_path(hash, req.body.data, main_contract.add, publicAddress));
+        //return res.status(200)
     } catch (err) {
         console.log(err.message);
         return res.status(400).json({ error: err.message });

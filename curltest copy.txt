@@ -2,19 +2,19 @@ curl --header "Content-Type: application/json" \
 --request POST \
 --data '
 {
-  "wallet": "0x1672ca450b864c254f31c0cb9dbad69e8bdf5862"
+  "wallet": "0x39039f9a578b92bd104cc55b23b5e8ddda6370ff"
 }
 ' http://localhost:3000/create/contract
 
 curl --header "Content-Type: application/json" --request POST --data '
 {
-  "wallet": "0x1672ca450b864c254f31c0cb9dbad69e8bdf5862"
+  "wallet": "0x39039f9a578b92bd104cc55b23b5e8ddda6370ff"
 }
 ' http://localhost:3000/get/contract
 
 curl --header "Content-Type: application/json" --request POST --data '
 {
-  "wallet": "0x1672ca450b864c254f31c0cb9dbad69e8bdf5862",
+  "wallet": "0x39039f9a578b92bd104cc55b23b5e8ddda6370ff",
   "data":
     {
         "vin": "1GGCS19X7V8654322",
@@ -27,49 +27,49 @@ curl --header "Content-Type: application/json" --request POST --data '
 
 curl --header "Content-Type: application/json" --request POST --data '
 {
-  "wallet": "0x1672ca450b864c254f31c0cb9dbad69e8bdf5862"
+  "wallet": "0x39039f9a578b92bd104cc55b23b5e8ddda6370ff"
 
 }
 ' http://localhost:3000/close/event
 
 curl --header "Content-Type: application/json" --request POST --data '
 {
-  "wallet": "0x1672ca450b864c254f31c0cb9dbad69e8bdf5862"
+  "wallet": "0x39039f9a578b92bd104cc55b23b5e8ddda6370ff"
 
 }
 ' http://localhost:3000/get/event/open
 
 curl --header "Content-Type: application/json" --request POST --data '
 {
-  "wallet": "0x1672ca450b864c254f31c0cb9dbad69e8bdf5862"
+  "wallet": "0x39039f9a578b92bd104cc55b23b5e8ddda6370ff"
 
 }
 ' http://localhost:3000/get/event/close
 
 curl --header "Content-Type: application/json" --request POST --data '
 {
-  "wallet": "0x1672ca450b864c254f31c0cb9dbad69e8bdf5862"
+  "wallet": "0x39039f9a578b92bd104cc55b23b5e8ddda6370ff"
 
 }
 ' http://localhost:3000/get/path/open
 
 curl --header "Content-Type: application/json" --request POST --data '
 {
-  "wallet": "0x1672ca450b864c254f31c0cb9dbad69e8bdf5862"
+  "wallet": "0x39039f9a578b92bd104cc55b23b5e8ddda6370ff"
 
 }
 ' http://localhost:3000/get/path/close
 
 curl --header "Content-Type: application/json" --request POST --data '
 {
-  "wallet": "0x1672ca450b864c254f31c0cb9dbad69e8bdf5862"
+  "wallet": "0x39039f9a578b92bd104cc55b23b5e8ddda6370ff"
 
 }
 ' http://localhost:3000/get/score
 
 curl --header "Content-Type: application/json" --request POST --data '
 {
-  "wallet": "0x1672ca450b864c254f31c0cb9dbad69e8bdf5862"
+  "wallet": "0x39039f9a578b92bd104cc55b23b5e8ddda6370ff"
 
 }
 ' http://localhost:3000/get/coin

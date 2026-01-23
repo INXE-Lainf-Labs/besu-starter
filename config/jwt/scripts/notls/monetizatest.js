@@ -268,6 +268,7 @@ async function getEventOpen(mastercontract, wallet_user) {
         usertank: parseFloat(ethers.formatUnits(usertank, decimals)).toFixed(2),
       };
 
+
       return formatted
     } else {
       console.log("Não existe evento aberto");
@@ -297,8 +298,6 @@ async function getEventClose(mastercontract, wallet_user) {
   const contractAbi2 = contractJson2.abi;
 
   const monetizaContract = new ethers.Contract(helpadd.args[1], contractAbi2, provider);
-
-
 
   const latestBlock = await provider.getBlockNumber();
   const step = 5000; // chunk size
@@ -635,7 +634,7 @@ async function getcoin(mastercontract, wallet_user) {
 
 
       const txNew = await writableContract.setcoin(help.args.id);
-       receipt = await txNew.wait();
+      receipt = await txNew.wait();
 
       return value;
     }
@@ -713,18 +712,24 @@ async function insert_path(hash, tuple, mastercontract, wallet_user) {
       listFuel = []
       listTime = []
 
-      a = tuple.data;
-      if (tuple.data[0].vin == data.vin) {
 
 
-        for (i = 0; i < a.length; i++) {
+      console.log("vin contrato")
+      console.log(eventuser.vin)
+      console.log("vin dados")
+      console.log(tuple[0].uservehicle.vin)
+
+      if (tuple[0].uservehicle.vin == data.vin) {
+
+
+        for (i = 0; i < tuple.length; i++) {
 
 
 
-          if (parseFloat(tuple.data[i].userdata.pos.lat) != 0.0 && parseFloat(tuple.data[i].userdata.pos.long) != 0.0) {
+          if (parseFloat(tuple[i].uservehicle.userdata.pos.lat) != 0.0 && parseFloat(tuple[i].uservehicle.userdata.pos.long) != 0.0) {
             point = {
-              lat: tuple.data[i].userdata.pos.lat,
-              lng: tuple.data[i].userdata.pos.long
+              lat: tuple[i].uservehicle.userdata.pos.lat,
+              lng: tuple[i].uservehicle.userdata.pos.long
             }
 
             listPoints.push(point)
@@ -732,13 +737,13 @@ async function insert_path(hash, tuple, mastercontract, wallet_user) {
 
 
 
-          listTime.push(tuple.data[i].userdata.time)
+          listTime.push(tuple[i].uservehicle.userdata.time)
 
-          for (j = 0; j < tuple.data[i].userdata.userdata.length; j++) {
+          for (j = 0; j < tuple[i].uservehicle.userdata.userdata.length; j++) {
 
-            if (tuple.data[i].userdata.userdata[j].pid = "01 2F") {
+            if (tuple[i].uservehicle.userdata.userdata[j].pid = "01 2F") {
 
-              listFuel.push(parseFloat(tuple.data[i].userdata.userdata[j].obddata.response))
+              listFuel.push(parseFloat(tuple[i].uservehicle.userdata.userdata[j].obddata.response))
 
             }
 
@@ -782,11 +787,25 @@ async function insert_path(hash, tuple, mastercontract, wallet_user) {
         //fingindo que adicionei o ruido
         newlistFuel = []
 
+        console.log("tempo capturado")
+        console.log(listtModify)
+
+         console.log("comb capturado")
+        console.log(listFuel)
+
+
         const regression = new rl.SimpleLinearRegression(listtModify, listFuel);
+
+        console.log("comb calculado")
+        console.log(regression)
 
 
         const json = regression.toJSON();
         const loaded = rl.SimpleLinearRegression.load(json);
+
+        console.log("comb JSON")
+        console.log(loaded)
+
         for (i = 0; i < listFuel.length; i++) {
 
           newlistFuel.push(loaded.predict(listtModify[i]));
@@ -828,21 +847,26 @@ async function insert_path(hash, tuple, mastercontract, wallet_user) {
         const readOnlyContract = new ethers.Contract(mastercontract, contractAbi, provider);
         const writableContract = readOnlyContract.connect(wallet);
 
+        console.log("lista de consumo")
+        console.log(newlistFuel)
 
+        console.log("comb final")
         console.log(fuel);
 
-        fuel = (fuel / 100) * 40;
+        fuel = (fuel / 100) * 20;
 
-
+        console.log("porcentagem")
         console.log(fuel);
 
 
         const decimals = 18; // depende do token
-        const dm = ethers.parseUnits(distmeters.toString(), decimals);
-        const f = ethers.parseUnits(fuel.toString(), decimals);
-        const ts = ethers.parseUnits(timef.toString(), decimals);
-        const tl = ethers.parseUnits(timeli.toString(), decimals);
+        const dm = ethers.parseUnits(distmeters.toFixed(6).toString(), decimals);
+        const f = ethers.parseUnits(fuel.toFixed(6).toString(), decimals);
+        const ts = ethers.parseUnits(timef.toFixed(6).toString(), decimals);
+        const tl = ethers.parseUnits(timeli.toFixed(6).toString(), decimals);
 
+
+        console.log("tratado")
         console.log(f);
 
 
@@ -939,3 +963,7 @@ module.exports = {
 
 
 //1000000000000000000n > 523069529879478500n
+
+//http://192.168.100.1
+//1GGCS19X7V8654322
+//0x4a18fc622010b2e963d29a523db5497e426b3258
