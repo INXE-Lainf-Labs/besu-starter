@@ -24,6 +24,8 @@ WORKDIR /scripts
 # Copy only package files to leverage Docker cache
 COPY package*.json ./
 
+
+RUN npm install
 # Copy application source
 COPY . .
 

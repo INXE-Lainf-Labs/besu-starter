@@ -109,7 +109,7 @@ app.post('/create/contract', async (req, res) => {
             await monetiza.createUserContract(main_contract.add, publicAddress);
             res.status(200).json('Contrato criado com sucesso');
         } else {
-            res.status(400).json("Não Existe");
+            res.status(400).json("Existe");
         }
 
     } catch (err) {
