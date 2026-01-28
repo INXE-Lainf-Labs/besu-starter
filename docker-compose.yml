@@ -243,6 +243,7 @@ services:
         --config-file=/config/rpcnode-user-config.toml \
         --p2p-host=$$(hostname -i) \
         --rpc-http-api=WEB3,ETH,NET,${BESU_CONS_ALGO:-QBFT} \
+        --host-allowlist="*"
     environment:
       - OTEL_RESOURCE_ATTRIBUTES=service.name=rpcnode,service.version=${BESU_VERSION:-latest}
     volumes:
