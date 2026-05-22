@@ -8,19 +8,19 @@ Cliente local do usuario para interagir com o oraculo e com a blockchain.
 python3 usuario.py ../data/trajetos/vehicles_step_sim_1.csv \
 --oracle-url http://127.0.0.1:5001 \
 --deployment-file deployment_info.json \
---user-private-key 0x8f2a55949038a9610f50fb23b5883af3b4ecb3c3bb792cbcefbd1542c692be63
+--user-private-key 
 
 python3 usuario.py ../data/trajetos/vehicles_step_sim_1.csv \
 	--oracle-url http://127.0.0.1:5001 \
 	--deployment-file deployment_info.json \
-	--user-private-key 0xc87509a1c067bbde78beb793e6fa76530b6382a4c0241e5e4a9ec0a0f44dc0d3 \
+	--user-private-key  \
 	--pseudonym-seed-file ./seed.txt \
 	--pseudonym-hd-index 0
 
 python3 usuario.py ../data/trajetos/vehicles_step_sim_1.csv \
   --oracle-url http://127.0.0.1:5001 \
   --deployment-file deployment_info.json \
-  --user-private-key 0xc87509a1c067bbde78beb793e6fa76530b6382a4c0241e5e4a9ec0a0f44dc0d3 \
+  --user-private-key  \
   --enable-map-matching \
   --search-radius-m 1500
 

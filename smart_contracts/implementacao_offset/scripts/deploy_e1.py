@@ -26,7 +26,7 @@ except ImportError:
 DEFAULT_SOLC_VERSION = "0.8.19"
 DEFAULT_GAS_LIMIT = 5_000_000
 DEFAULT_RPC_URL = "http://localhost:8545"
-DEFAULT_PRIVATE_KEY = "0xc87509a1c067bbde78beb793e6fa76530b6382a4c0241e5e4a9ec0a0f44dc0d3"
+DEFAULT_PRIVATE_KEY = ""
 
 
 def ensure_openzeppelin(base_dir: Path) -> Path:
